@@ -25,10 +25,15 @@ kidModel.prototype.update=function(information,idTimer){
     this.syncedWithDB=true;
     this.targets=[];
     //TODO take the targets from the db
-
     this.date=Date.now();
+
+    var permittedLocation=this.isInPermittedLocation();
+    this.notifier.publish({latitude:this.latitude,longitude:this.longitude,permitedLocation:permittedLocation});
     return true;
 };
+kidModel.prototype.getNotifier= function () {
+    return this.notifier;
+}
 
 kidModel.prototype.getPosition=function(){
     if(this.syncedWithDB==false){
