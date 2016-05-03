@@ -3,19 +3,26 @@
  */
 
 var child_handler= require('./child_handler');
-
-
 var parentFactory= function(){
     this.map= new Map();
 }
 
 parentFactory.prototype.getInstance= function(id){
-
-    var parentInstance=this.map.get(id);
-    if(parentInstance===undefined){
-        parentInstance= new child_handler(id);
-        this.map.set(id,parentInstance);
+    var parentInstance=undefined;
+    var map= this.map;
+    parentInstance=map.get(id);
+    if(parentInstance===undefined) {
+        parentInstance = new child_handler(id);
+        map.set(id, parentInstance);
     }
     return parentInstance;
 }
-module.exports= parentFactory();
+
+
+var factory= new parentFactory();
+var getFactoryInstance= function(){
+    return factory;
+}
+
+
+module.exports=getFactoryInstance;

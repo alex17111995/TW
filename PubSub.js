@@ -24,18 +24,3 @@ PubSub.prototype.unsubscribe= function(handler){
 }
 var instance;
 module.exports=PubSub;
-
-
-function createInstance() {
-    var object = new PubSub();
-    return object;
-}
-
-module.exports= {
-    getInstance: function () {
-        if (!instance) {
-            instance = createInstance();
-        }
-        return instance;
-    }
-};
