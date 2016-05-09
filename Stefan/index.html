@@ -1,0 +1,342 @@
+<html>
+
+<head>
+    <script src="http://maps.googleapis.com/maps/api/js"></script>
+    <script type="text/javascript">
+        var map;
+
+
+        var staticTargets = [];
+        var kidInformation = {
+            "type": "parent"
+            , "kids": [
+                {
+                    "location": {
+                        "latitude": 14
+                        , "longitude": 42
+                        , "online": false
+                    }
+                    , "permittedLocation": false
+                    , "targets": [
+                        {
+                            "id": 1
+                            , "latitude": 47.2134086
+                            , "longitude": 27.506618208900048
+                            , "radius": 1000
+                            , "date": 0
+                        }, {
+                            "id": 2
+                            , "latitude": 47.1584549
+                            , "longitude": 27.60144179576599975
+                            , "radius": 1000
+                            , "date": 0
+                        }]
+                    , "kid": "Andrei"
+                }
+
+
+                
+                , {
+                    "location": {
+                        "latitude": 14
+                        , "longitude": 42
+                        , "online": false
+                    }
+                    , "permittedLocation": false
+                    , "targets": [
+                        {
+                            "id": 1
+                            , "latitude": 47.2167065
+                            , "longitude": 27.506618200000048
+                            , "radius": 1000
+                            , "date": 0
+                        }
+
+
+
+                        
+                        , {
+                            "id": 2
+                            , "latitude": 47.1567539
+                            , "longitude": 27.601441799999975
+                            , "radius": 1000
+                            , "date": 0
+                        }]
+                    , "kid": "Ciubi"
+                }]
+            , "username": "Vasile Bengosu"
+        };
+        var xhttp = new XMLHttpRequest();
+        var latestTimestamp;
+
+        function hideScroll() {
+            var parent = document.getElementById('notification-area');
+            var child = document.getElementById('notification-holder');
+            child.style.right = child.clientWidth - child.offsetWidth + "px";
+        }
+
+
+        function ajax_long_poll() {
+
+            xhttp.onreadystatechange = function () {
+                if (xhttp.readyState == 4 && xhttp.status == 200) {
+                    console.log(xhttp.response);
+                }
+            }
+
+            xhttp.open("GET", "ajax-get-notification?timestamp=-1", true);
+            xhttp.send();
+        }
+        window.onload = ajax_long_poll
+
+
+        function updateTimestamp() {
+            latestTimestamp = xhttp.response['timestamp'];
+        }
+
+        function loadMap() {
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: new google.maps.LatLng(47.165528, 27.560970)
+                , zoom: 13
+                , mapTypeId: google.maps.MapTypeId.ROADMAP
+                , disableDefaultUI: true
+            });
+        }
+        google.maps.event.addDomListener(window, 'load', loadMap);
+
+        function drawStaticTargets() {
+            var i = 0
+                , j = 0;
+            for (i = 0; i < kidInformation.kids.length; i++) {
+                for (j = 0; j < kidInformation.kids[i].targets.length; j++) {
+                    staticTargets.push(new google.maps.Circle({
+                        strokeColor: '#333F4F'
+                        , strokeOpacity: 1
+                        , strokeWeight: 2
+                        , fillColor: '#333F4F'
+                        , fillOpacity: 0.15
+                        , map: map
+                        , editable: false
+                        , draggable: false
+                        , center: new google.maps.LatLng(kidInformation.kids[i].targets[j].latitude, kidInformation.kids[i].targets[j].longitude)
+                        , radius: kidInformation.kids[i].targets[j].radius
+                    , }));
+                }
+            }
+        }
+
+
+        function generateNotificationCode(type, sender, target) {
+            var notificationType
+                , notificationText
+                , interactiveArea
+                , notificationCode;
+            if (type == "management") {
+                notificationCode = "<div class=\"management-notification-card mdl-card mdl-shadow--16dp\">";
+                notificationType = "Management <br/> Request";
+                notificationText = sender + " has requested management rights for " + target;
+                interactiveArea = "<a class = \"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\"> Accept </a> <a class = \"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" > Decline </a>";
+            } else if (type == "view") {
+                notificationCode = "<div class=\"viewing-notification-card mdl-card mdl-shadow--16dp\">";
+                notificationType = "Viewing <br/> Request";
+                notificationText = sender + " has requested viewing rights for " + target;
+                interactiveArea = "<a class = \"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\"> Accept </a> <a class = \"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" > Decline </a>";
+            } else if (type == "alert") {
+                notificationCode = "<div class=\"alert-notification-card mdl-card mdl-shadow--16dp\">";
+                notificationType = "Alert!"
+                notificationText = target + " has left the area set by " + sender;
+                interactiveArea = "<a class = \"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\"> Dismiss </a>";
+            }
+
+
+            notificationCode += "<div class=\"mdl-card__title mdl-card--border\">";
+            notificationCode += "<h2 class=\"mdl-card__title-text\">" + notificationType + "</h2>";
+            notificationCode += "</div> <div class = \"mdl-card__supporting-text\" >" + notificationText + "</div>";
+            notificationCode += "<div class = \"mdl-card__actions mdl-card--border\">" + interactiveArea + "</div></div>";
+            return notificationCode;
+        }
+
+        function displayNotification(type, sender, target) {
+            var newNotification = document.createElement("p");
+            var notificationCode = generateNotificationCode(type, sender, target);
+            document.getElementById('notification-area').appendChild(newNotification).innerHTML = notificationCode;
+        }
+
+        function clearTarget() {
+            var targetID = document.getElementById("targetToBeDeleted").value;
+            staticTargets[targetID].setMap(null);
+        }
+
+        function deleteTarget(targetID) {
+            //removes the target from the map
+            staticTargets[targetID].setMap(null);
+            //call to script that will delete the HTML code from the kid card - TO DO
+        }
+
+        function toggleEdit(targetID){
+            if(staticTargets[targetID].editable == false)
+            staticTargets[targetID].set('editable',true);
+            else staticTargets[targetID].set('editable',false);
+        }
+
+        function displayCommand() {
+            var newCommand = document.createElement("p");
+            var commandText = document.getElementById("consoleCommand").value;
+            document.getElementById('consoleHistory').appendChild(newCommand).innerHTML = "your command is" + commandText;
+        }
+
+        function loadUsername() {
+            var currentUser = document.createElement("p");
+            var shit = "<h2 class=\"mdl-card__title-text\">" + kidInformation.username + "</h2>";
+            document.getElementById('user-name').appendChild(currentUser).innerHTML = shit;
+        }
+
+        function loadKids() {
+
+        }
+
+        function displayChildCard() {
+
+        }
+
+        function generateChildCardCode() {
+            var childCardCode;
+
+
+
+
+
+            /*  <div id="kid-card-holder">
+                  <div class="card mdl-shadow--8dp">
+                      <div class="mdl-card__title mdl-card--border">
+                          <h2 class="mdl-card__title-text ">Alex</h2>
+                          <span style="position: absolute;right: 15px;"> <i class="material-icons">more_vert</i> </span>
+                      </div>
+                  </div>
+              </div>*/
+
+
+        }
+    </script>
+
+
+
+    <title>Kid Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.min.js"></script>
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.blue-red.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="components.css">
+
+</head>
+
+<body onload="drawStaticTargets();loadUsername();eliminateScrollbar() ">
+
+    <div class="interface-area mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
+        <div class="mdl-layout__drawer  mdl-color--indigo">
+            <div class="title-card mdl-shadow--16dp mdl-color--white">
+                <div class="mdl-card__title">
+                    <div id="user-name"> </div>
+                </div>
+            </div>
+            <br/>
+            <div id="kid-card-holder">
+                <div class="card mdl-shadow--16dp">
+                    <div class="mdl-card__title mdl-card--border">
+                        <h2 class="mdl-card__title-text ">Alex</h2>
+                        <span style="position: absolute;right: 15px;">
+                          <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">more_vert</i></button>
+                            <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="kid-menu-test">
+                              <li class="mdl-menu__item">Stop following</li>
+                              <li class="mdl-menu__item">Nearby kids</li>
+                            </ul>
+                         </span>
+                    </div>
+                    <div class="mdl-card__actions mdl-card--border">
+                        <button id="staticTargetID" class="mdl-button mdl-js-button mdl-button mdl-js-ripple-effect" style="width: 100px">Area 1</button>
+                        <span style="position: absolute;right: 15px;"> 
+                            <label class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="icon-toggle-2">
+                                <input type="checkbox" id="icon-toggle-2" class="mdl-icon-toggle__input" onclick = "toggleEdit('1')">
+                                <i class="mdl-icon-toggle__label material-icons">mode_edit</i>
+                            </label> &#160 &#160 
+                            <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon" onclick = "deleteTarget('1')" >
+                                <i class="material-icons">delete</i></button>
+                        </span>
+                        <br/>
+                        <br/>
+                        <button id="staticTargetID" class="mdl-button mdl-js-button mdl-button mdl-js-ripple-effect" style="width: 100px">Area 2</button>
+                        <span style="position: absolute;right: 15px;"> 
+                            <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon">
+                                <i class="material-icons">mode_edit</i></button> &#160 &#160 
+                            <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon">
+                                <i class="material-icons">delete</i></button>
+                        </span>
+                        <br/>
+                        <br/>
+                        <button id="staticTargetID" class="mdl-button mdl-js-button mdl-button mdl-js-ripple-effect" style="width: 100px">Area 3</button>
+                        <span style="position: absolute;right: 15px;"> 
+                            <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon">
+                                <i class="material-icons">mode_edit</i></button> &#160 &#160 
+                            <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon">
+                                <i class="material-icons">delete</i></button>
+                        </span>
+                        <br/>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+            <footer class="mdl-mini-footer">
+                <div class="mdl-mini-footer__left-section">
+                    <a class="logout-button mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent"> Logout <i class="material-icons">exit_to_app</i></a>
+                </div>
+            </footer>
+        </div>
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                <div id="map" style="height: 100%;width: 100%;"></div>
+            </div>
+        </main>
+    </div>
+    <div class="testButtons">
+        <div class="card mdl-shadow--16dp">
+            <form>
+                <input type="button" onclick="displayNotification('management','vladut','sorana')" value="Management">
+                <input type="button" onclick="displayNotification('view','vladut','sorana')" value="View">
+                <input type="button" onclick="displayNotification('alert','vladut','sorana')" value="Alert">
+                <br/>
+                <input type="button" onclick="drawStaticTargets()" value="Static Targets">
+                <input type="text" id="targetToBeDeleted" placeholder="Enter a number">
+                <input type="button" onclick="clearTarget()" value="Push to test">
+                <input type="button" onclick="eliminateScrollbar()" value="scroll">
+            </form>
+        </div>
+    </div>
+
+
+    <div id="notification-area">
+        <div id="notification-holder">
+
+
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-color-blue">
+            <label class="mdl-button mdl-js-button mdl-button--icon" for="sample6">
+                <i class="material-icons">search</i>
+            </label>
+            <div class="mdl-textfield__expandable-holder">
+                <input class="mdl-textfield__input" type="text" id="sample6">
+                <label class="mdl-textfield__label" for="sample-expandable">Expandable Input</label>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

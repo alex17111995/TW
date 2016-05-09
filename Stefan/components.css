@@ -1,0 +1,95 @@
+.notification-card-test.mdl-card {
+    width: 350px;
+    right: 10px;
+    top: 15px;
+    bottom: 15px;
+}
+
+.management-notification-card > .mdl-card__title {
+    color: #000;
+    height: 80px;
+    background: url('./management_icon.png') center/cover;
+}
+
+.viewing-notification-card > .mdl-card__title {
+    color: #000;
+    height: 80px;
+    background: url('./view_icon.png') center/cover;
+}
+
+.alert-notification-card > .mdl-card__title {
+    color: #000;
+    max-width: 100%;
+    height: 80px;
+    background: url('./alert_icon.png') center/cover;
+}
+
+.notification-card-test > .mdl-card__menu {
+    color: #fff
+}
+
+.mdl-layout__drawer {
+    border: 0px;
+}
+
+.mdl-textfield {
+    background-color: blue;
+    border-bottom-left-radius: 25px;
+}
+
+.mdl-mini-footer {
+    margin: auto;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.logout-button {
+    left: 35%;
+}
+
+.interface-area {
+    overflow: hidden;
+}
+
+.user-name {
+    text-align: center;
+}
+
+.card {
+    width: 220px;
+    height: auto;
+    align-self: center;
+    background-color: ghostwhite;
+}
+
+#kid-card-holder {
+    top: 0px;
+    align-self: center;
+}
+
+#notification-holder {
+    position: absolute;
+    height: 100%;
+    top: 0px;
+    bottom: 0px;
+    right: 0px
+    /* exact value is given through JavaScript */
+    border: 1px solid blue;
+    overflow: auto;
+}
+
+.title-card {
+    width: auto;
+    height: 50px;
+    text-align: center;
+    align-self: auto;
+}
+
+.testButtons {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 6;
+}
