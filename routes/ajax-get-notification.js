@@ -3,7 +3,8 @@
  */
 var express = require('express');
 var router = express.Router();
-var parentFactory = require('../model/parentFactory');
+var parent_model = require('../model/kidModel');
+var kid_model= require('../model/child_handler');
 var verifySession = function (req, res, next) {
     if (req.session.isLogged != undefined)
         next();
@@ -13,13 +14,16 @@ var verifySession = function (req, res, next) {
 
 router.get('/', verifySession, function (req, res, next) {
     var timestamp=req.query.timestamp;
+    var model;
     if (req.session.type == "parent") {
-        var parent = parentFactory().getInstance(req.session.id_user);
-        parent.getNotifications(timestamp,function(kidEvents){
+        model = new parent_model(req.sesion.id_user);
+    }
+    else model= new kid_model(req.session.id_user);
+
+
+        model.getNotifications(timestamp,function(kidEvents){
            res.send(kidEvents);
         });
-
-    }
 
 
 

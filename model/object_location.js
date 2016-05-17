@@ -25,14 +25,14 @@ object_location.prototype.updateLocation=function(latitude,longitude){
         this.objectWithLocation.hasGoneOffline();
         this.timeoutObject=undefined;
         this.online=false;
-    },this.timeoutValue);
+    }.bind(this),this.timeoutValue);
 }
 object_location.prototype.print=function(){
     return {'latitude':this.latitude,'longitude':this.longitude,'online':this.online};
 }
 
-module.exports=object_location;
 
+module.exports=object_location;
 
 
 

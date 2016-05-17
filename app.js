@@ -7,6 +7,8 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var login = require('./routes/login');
+var new_target= require('./routes/new_target');
+var update_position= require('./routes/update-position');
 var ajax_notification=require('./routes/ajax-get-notification');
 var session=require('express-session');
 var app = express();
@@ -24,7 +26,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.locals.pretty=true;
 app.use(session({
   secret: 'keyboard cat',
   resave: true,
@@ -35,6 +37,8 @@ app.use('/', routes);
 app.use('/users', users);
 app.use('/login',login);
 app.use('/ajax-get-notification',ajax_notification);
+app.use('/update',update_position);
+app.use('/new_target',new_target);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

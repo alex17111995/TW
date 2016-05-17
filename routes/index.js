@@ -3,7 +3,8 @@ var router = express.Router();
 var pubSub = require('../PubSub')
 var dbconnect = require('../model/dbconnect');
 var promise = require('promise');
-var parentFactory = require('../model/parentFactory');
+var kid_model = require('../model/kidModel');
+var parent_model = require('../model/child_handler');
 /* GET home page. */
 
 var verifySession = function (req, res, next) {
@@ -12,34 +13,49 @@ var verifySession = function (req, res, next) {
     else
         res.redirect('/login');
 }
+router.get('/stefan', verifySession, function (req, res, next) {
+
+
+    //  if (req.session.type == "parent") {
+    //    parent.getInformation(function(information) {
+    //      res.render('index-stefan',{'information':information});
+    // });
+
+//    }
+    //  else {
+    var kid = parent_model(req.session.user_id);
+    kid.getInformation(-1, function (kidInfo) {
+        res.render('index-stefan', {'information': kidInfo});
+
+    });
+    //}
+
+});
 
 router.get('/', verifySession, function (req, res, next) {
 
-    if (req.session.isLogged != true) {
-        res.redirect('/login');
-    }
-    else {
-        if (req.session.type == "parent") {
-            var parent = parentFactory().getInstance(req.session.id_user);
-            parent.getChildren(function (children) {
-                var promiseArray = [];
-                for (var i = 0; i < children.length; i++) {
-                    var promiseChild = new promise(function (resolve, reject) {
-                        children[i].getKidInformation(-1,function (kidInfo) {
-                            resolve(kidInfo);
-                        });
-                    });
-                    promiseArray.push(promiseChild);
-                }
-                promise.all(promiseArray).then(function (arrayChildren) {
-                    console.log(arrayChildren);
-                    res.send(arrayChildren);
-                }).catch(function (rekt) {
-                    res.send(rekt);
-                });
-            });
-        }
-    }
+    /*
+     if (req.session.type == "parent") {
+     var parent = parentFactory().getInstance(req.session.id_user);
+     parent.getInformation(function (information) {
+     res.send(information);
+     });
+
+     }
+     */
+    var model;
+    if (req.session.type =='kid')
+        model = new kid_model();
+    else model = new parent_model();
+
+
+    model.getEvents(req.session.id_user, -1, function (values) {
+        res.send(values);
+    }, function () {
+        res.send("error");
+    });
+
+
 });
 
 
