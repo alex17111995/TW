@@ -5,13 +5,17 @@
 var mysql = require('mysql');
 var promise = require('promise');
 var connection = new mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.1.2',
+    localAddress:'192.168.1.3',
     user: 'root',
     port: 3306,
     password: 'salutyo1',
     database: 'tw'
 });
-connection.connect();
+connection.connect(function(err){
+    if(err)
+    console.log(err);
+});
 //connection.connect();
 
 module.exports=connection;

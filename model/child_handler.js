@@ -12,20 +12,22 @@ var child_handler = function () {
 }
 
 
-child_handler.prototype.listenChildrenForEvent = function (callback) {
-    /*
-    for (var i = 0; i < this.kids.length; i++) {
-        var notifier = this.kids[i].getNotifier();
+child_handler.prototype.listenChildrenForEvent = function (pid, callback) {
+    this.getChildren(pid, function (arrayKids) {
         const callbackNotifier = function (kidEvent) {
             this.unsubscribeChildren(callbackNotifier);
             callback(kidEvent);
         }.bind(this);
-        notifier.subs(callbackNotifier);
-    }
-    */
-
-
+        for (var i = 0; i < arrayKids.length; i++) {
+            var notifier = PubSubFactory(channels.getChildChannelName(), arrayKids[i]['kid']);
+            notifier.subs(callbackNotifier);
+        }
+    });
 };
+
+child_handler.prototype.unsubscribe_children = function (callbackNotifier) {
+
+}
 child_handler.prototype.validUser = function (username, password, callbackOK, callbackError) {
     connection.query('select pid from parents where username=? and passwordHash=?', [username, password], function (err, rows, fields) {
         console.log(err);
@@ -89,6 +91,61 @@ child_handler.prototype.getInformation = function (callback) {
     }.bind(this);
     this.callOrWaitInitialization(callbackToAdd);
 };
+child_handler.prototype.getUsernameAndName = function (pid, callbackErrorAndUsername) {
+
+    connection.query('select username,firstName,lastName from parents where pid=?', [pid], function (err, rows) {
+        if (err != null) {
+            callbackErrorAndUsername(err);
+            return;
+        }
+        if (rows.length == 0) {
+            callbackErrorAndUsername("invalid kid");
+            return;
+        }
+        callbackErrorAndUsername(null, {
+            'username': rows[0]['username'],
+            'first_name': rows[0]['firstName'],
+            'last_name': rows[0]['lastName']
+        });
+
+    });
+
+};
+
+
+child_handler.prototype.getInitialInformation = function (pid, callbackErrorInitialObjectParameter) {
+
+    var promiseEvents = new promise(function (resolve, reject) {
+
+
+
+    }.bind(this));
+
+    var promiseUsernameOfKid = new promise(function (resolve, reject) {
+        this.getUsernameAndName(pid, function (error, usernameAndName) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(usernameAndName);
+        });
+
+    }.bind(this));
+    promise.all([promiseUsernameOfKid, promiseEvents]).then(function (values) {
+        var initial_object = {
+            'credentials': values[0],
+            'events': values[1]
+        };
+        process.nextTick(function () {
+            callbackErrorInitialObjectParameter(null, initial_object)
+        });
+    }).catch(function (error) {
+        process.nextTick(function () {
+            callbackErrorInitialObjectParameter(error);
+        });
+    });
+
+};
 
 child_handler.prototype.getEvents = function (pid, lastTimestamp, callback) {
     var parentInstance = this;
@@ -99,7 +156,9 @@ child_handler.prototype.getEvents = function (pid, lastTimestamp, callback) {
             var promiseChild = new promise(function (resolve, reject) {
 
                 kid_model.getEvents(children[i]['kid'], lastTimestamp, function (kidInfo) {
-                    resolve(kidInfo);
+                    if (kidInfo != undefined)
+                        resolve({'kid': children[i], 'events': kidInfo});
+                    else resolve(undefined);
                 });
             });
             promiseArray.push(promiseChild);
@@ -111,8 +170,7 @@ child_handler.prototype.getEvents = function (pid, lastTimestamp, callback) {
                 return true;
 
             });
-            if (arrayWithoutUndefiened.length != 0)
-                callback(arrayWithoutUndefiened);
+                callback({'children':arrayWithoutUndefiened});
             // else this.listenChildrenForEvent(callback);
 
 

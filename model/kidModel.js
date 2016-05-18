@@ -12,6 +12,21 @@ var kidModel = function () {
 
 };
 
+kidModel.prototype.subscribe = function (kid, callback) {
+    var notifier = PubSubFactory(channels.getChildChannelName(), kid);
+    var callbackNotifier = function (newEvent) {
+        process.nextTick(function () {
+            callback(newEvent);
+        });
+        notifier.unsubscribe(callbackNotifier);
+    }.bind(this);
+    notifier.subs(callbackNotifier);
+    return callbackNotifier;
+};
+kidModel.prototype.unsubscribe = function (kid, callbackNotifier) {
+    var notifier = PubSubFactory(channels.getChildChannelName(), this.id);
+    notifier.unsubscribe(callbackNotifier);
+};
 
 var isInPermittedLocation = function (object_location, targets) { //PRIVATE FUNCTION NOT IN PROTOTYPE
     var kid_longitude = object_location.longitude;
@@ -49,11 +64,13 @@ kidModel.prototype.updateLocation = function (kid, information, callbackSuccessf
                 this.staticTargetsOfKid(kid, function (targets) {
                     var is_permitted = isInPermittedLocation(information, targets);
                     var object = {
-                        'longitude': information['longitude'],
-                        'latitude': information['latitude'],
-                        'online': true,
-                        'timestamp': timestamp,
-                        'is_permitted': is_permitted
+                        'location': {
+                            'longitude': information['longitude'],
+                            'latitude': information['latitude'],
+                            'online': true,
+                            'timestamp': timestamp,
+                            'is_permitted': is_permitted
+                        }
                     };
                     connection.commit(function (err) {
                         if (err) {
@@ -62,8 +79,9 @@ kidModel.prototype.updateLocation = function (kid, information, callbackSuccessf
                             });
                         }
                         process.nextTick(function () {
+                            this.publishNotifier(kid, object)
                             callbackSuccessfulUpdated(object);
-                            this.notifer.publish(object);
+
                         }.bind(this));
                     }.bind(this));
                 }.bind(this), function (err) {
@@ -81,25 +99,98 @@ kidModel.prototype.updateLocation = function (kid, information, callbackSuccessf
 
 
 };
+kidModel.prototype.publishNotifier = function (kid, message) {
+    var notifier = PubSubFactory(channels.getChildChannelName(), kid);
+    notifier.publish({'kid': kid, 'events': message});
+
+};
 kidModel.prototype.getNotifier = function () {
     return this.notifier;
 };
+kidModel.prototype.getUsernamAndName = function (kid, callbackErrorAndUsername) {
 
-kidModel.prototype.getNotifications = function (lastTimestamp, callback) {
-
-    this.getInformation(lastTimestamp, function (kidInfo) {
-        if (kidInfo != undefined) {
-            callback(kidInfo);
+    connection.query('select username,firstName,lastName from children where kid=?', [kid], function (err, rows) {
+        if (err != null) {
+            callbackErrorAndUsername(err);
             return;
         }
+        if (rows.length == 0) {
+            callbackErrorAndUsername("invalid kid");
+            return;
+        }
+        callbackErrorAndUsername(null, {
+            'username': rows[0]['username'],
+            'first_name': rows[0]['firstName'],
+            'last_name': rows[0]['lastName']
+        });
 
-        var callbackNotifier = function (newEvent) {
-            console.log("M-AM APELAT");
-            callback(newEvent);
-            this.notifier.unsubscribe(callbackNotifier);
-        }.bind(this);
-        this.notifier.subs(callbackNotifier);
+    });
+
+};
+
+kidModel.prototype.getInitialInformation = function (kid, callbackErrorInitialObjectParameter) {
+
+    var promiseEvents = new promise(function (resolve, reject) {
+        this.getEvents(kid, -1, function (events) {
+            resolve(events);
+            //callbackInitialObjectParameter({'error': null})
+        }, function (err) {
+            reject(err);
+            //callbackInitialObjectParameter({'error': err});
+        });
     }.bind(this));
+
+    var promiseUsernameOfKid = new promise(function (resolve, reject) {
+        this.getUsernamAndName(kid, function (error, usernameAndName) {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(usernameAndName);
+        });
+
+    }.bind(this));
+    promise.all([promiseUsernameOfKid, promiseEvents]).then(function (values) {
+        var initial_object = {
+            'credentials': values[0],
+            'events': values[1],
+            'kid':kid
+        };
+        process.nextTick(function () {
+            callbackErrorInitialObjectParameter(null, initial_object)
+        });
+    }).catch(function (error) {
+        process.nextTick(function () {
+            callbackErrorInitialObjectParameter(error);
+        });
+    });
+
+};
+kidModel.prototype.getNotifications = function (kid, lastTimestamp, callbackErrorAndNewEvents) {
+
+    this.getEvents(kid, lastTimestamp, function (events) {
+
+        var arrayKeys = Object.keys(events);
+        if ((Object.keys(events)).length != 0) {
+            console.log((Object.keys(events)).lenght);
+            process.nextTick(function () {
+                callbackErrorAndNewEvents(null, events);
+            });
+            return;
+        }
+        var functionToUnsubscribe = this.subscribe(kid, function (listenedEvents) {
+            this.unsubscribe(kid, functionToUnsubscribe);
+            process.nextTick(function () {
+                callbackErrorAndNewEvents(null, listenedEvents);
+            });
+        }.bind(this));
+
+
+    }.bind(this), function (error) {
+        process.nextTick(function () {
+            callbackErrorAndNewEvents(error);
+        });
+    });
 };
 /*
  kidModel.prototype.getTargets = function (callback) {
@@ -176,14 +267,23 @@ kidModel.prototype.getEvents = function (kid, timestampLastInfo, callbackOK, cal
         var promiseStaticTargets = new promise(function (resolve, reject) {
 
             this.staticTargetsOfKid(kid, function (array) {
-                if (array.length != 0)
+                array = array.filter(function (object) {
+                    if (object['creation_date'] > timestampLastInfo)
+                        return true;
+                    return false;
+                });
+                if (array.length != 0) {
                     resolve(array);
+
+                }
                 else resolve(undefined);
 
             }.bind(this), function (err) {
                 reject(err);
             });
         }.bind(this));
+
+
         promise.all([promiseKidLocation /*, promiseDynamicTargets*/, promiseStaticTargets]).then(function (values) {
             var object = {};
             if (values[0] != undefined) {
@@ -238,7 +338,7 @@ kidModel.prototype.targetStateChanged = function (target) {
     //TODO NU E BUNA
     this.notifier.publish(target.print());
 };
-kidModel.prototype.deleteTarget = function (targetID, callbackOK, callbackError) {
+kidModel.prototype.deleteTarget = function (kid, targetID, callbackOK, callbackError) {
     var sql_query = 'UPDATE static_target set status=1,timestamp=? where static_target_id=?';
     var timestamp = Date.now();
     connection.query(sql_query, [timestamp, targetID], function (err, rows, fields) {
@@ -251,7 +351,7 @@ kidModel.prototype.deleteTarget = function (targetID, callbackOK, callbackError)
             'static_target_id': targetID
         };
         callbackOK(object);
-        var notifier = PubSubFactory(channels.getChildChannelName(), this.id);
+        var notifier = PubSubFactory(channels.getChildChannelName(), kid);
         notifier.publish(object);
 
     }.bind(this));
@@ -267,15 +367,18 @@ kidModel.prototype.updateTarget = function (targetID, radius, latitude, longitud
             callbackError('invalid target');
         }
         var updated_target = {
-            'radius': radius,
-            'latitude': latitude,
-            'longitude': longitude,
-            'static_target_id': targetID,
-            'timestamp': timestamp
+            'static-target': {
+                'radius': radius,
+                'latitude': latitude,
+                'longitude': longitude,
+                'static_target_id': targetID,
+                'timestamp': timestamp
+            }
         };
         callbackOK(updated_target);
         var notifer = PubSubFactory(channels.getChildChannelName(), this.id);
         notifer.publish(updated_target);
+
     }.bind(this));
 
 

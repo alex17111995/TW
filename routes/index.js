@@ -49,11 +49,12 @@ router.get('/', verifySession, function (req, res, next) {
     else model = new parent_model();
 
 
-    model.getEvents(req.session.id_user, -1, function (values) {
+    model.getInitialInformation(req.session.id_user, function (error,values) {
         res.send(values);
     }, function () {
         res.send("error");
     });
+
 
 
 });

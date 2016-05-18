@@ -4,7 +4,7 @@
 var express = require('express');
 var router = express.Router();
 var parent_model = require('../model/kidModel');
-var kid_model= require('../model/child_handler');
+var kid_model= require('../model/kidModel');
 var verifySession = function (req, res, next) {
     if (req.session.isLogged != undefined)
         next();
@@ -19,12 +19,11 @@ router.get('/', verifySession, function (req, res, next) {
         model = new parent_model(req.sesion.id_user);
     }
     else model= new kid_model(req.session.id_user);
+    timestamp=parseInt(timestamp);
 
-
-        model.getNotifications(timestamp,function(kidEvents){
+        model.getNotifications(req.session.id_user,timestamp,function(error,kidEvents){
            res.send(kidEvents);
         });
-
 
 
 
