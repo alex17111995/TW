@@ -4,28 +4,25 @@
 
 var mysql = require('mysql');
 var promise = require('promise');
+var oracleDB = require('oracledb');
+var pool = undefined;
+
+
 var connection = new mysql.createConnection({
-    host: '192.168.1.2',
-    localAddress:'192.168.1.3',
+    host: 'localhost',
     user: 'root',
     port: 3306,
     password: 'salutyo1',
     database: 'tw'
 });
-connection.connect(function(err){
-    if(err)
-    console.log(err);
-});
+
+
+connection.connect();
 //connection.connect();
 
-module.exports=connection;
+module.exports = connection;
 
-var queries = {
-
-
-
-
-};
+var queries = {};
 
 var queries22 = {
     validUser: function (username, password, type, callbackOK, callbackError) {
