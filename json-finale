@@ -1,0 +1,49 @@
+
+// astea sunt "eventurile care se pot intampla cuiva" nu sunt si numele si usernamul unui kid/pid
+ma gandeam astea sa le pun sa vina separat si eventual, sa implementez o metoda de genu 
+/get-credentials?kid/pid=numar 
+{
+	'static_targets':
+	{
+		static_target_timestamp: number,
+		'static_target_values':
+			[ kid:{
+				radius:number,
+				latitude:number,
+				longitude: number,
+			} ]
+
+	
+}
+
+	'dynamic_targets':
+	{
+		dynamic_target_timestamp:number, /*am nevoie de dtid  si de location pt ca dynamic_target tine schimbarile la targeturi, in timp ce timerul tine care a fost update-ul la unul dintre pariti, ca sa stiu daca intre timp este vreo unul care si-a schimbat locatia */
+
+		parent_location_timestamp:number
+
+		'dynamic_target_value':
+		[
+			kid:{
+			radius:number,
+			pid:number,
+			longitude:number,
+			latitude:number
+			}
+		]
+
+
+	}
+	'child_handlers':
+	{
+	child_handlers_timestamp: number
+	child_handlers_values:[kid:[{pid,permission}] ] //ma gandeam 0=sters,1 = requesting, 2=reading_right,3=writing_right.. ma gandeam sa nu-ti spun explicit ce drepturi ai, tu iti vei stii pid/kid-ul, deci poti sa stii daca ai permisiune de stergere sau nu daca ai nevoie pe la gui sa activezi/dezactivezi niste butoane
+	//daca te vezi sters de la child_handlers nu-ti zic explicit dar daca iti vezi pid-ul pe la vreun copil ca fiind 0, inseamna ca te-a sters.. si nu vei mai primi eventuri de la el
+	}
+	'child-location':
+	{
+	child_location_timestamp: number
+	child_location_values:[kid:{latitude,longitude,isOnline,date_last_update}]
+	}
+
+}
