@@ -4,7 +4,9 @@
 var map= new Map();
 var PubSub=require('./PubSub');
 
+
 var FactoryPubSub= function(type,id){
+
    mapOfType= map.get(type);
     if(mapOfType===undefined){
         mapOfType= new Map();
@@ -20,6 +22,6 @@ var FactoryPubSub= function(type,id){
         return pubSubInstance;
     }
     return pubSubInstance;
-}
+};
 
 module.exports=FactoryPubSub;

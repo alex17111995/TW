@@ -9,7 +9,7 @@ var pool = undefined;
 
 
 var connection = new mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.1.2',
     user: 'root',
     port: 3306,
     password: 'salutyo1',
@@ -17,7 +17,7 @@ var connection = new mysql.createConnection({
 });
 
 
-connection.connect();
+//connection.connect();
 //connection.connect();
 
 module.exports = connection;

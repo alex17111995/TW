@@ -6,7 +6,7 @@ var static_target = function (id, latitude, longitude, radius, date) {
     this.id = id;
     this.latitude = latitude;
     this.longitude = longitude;
-    this.radius = radius
+    this.radius = radius;
     this.date = date;
 };
 

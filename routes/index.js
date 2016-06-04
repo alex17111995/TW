@@ -1,11 +1,14 @@
 var express = require('express');
 var router = express.Router();
-var pubSub = require('../PubSub')
+var pubSub = require('../PubSub');
 var dbconnect = require('../model/dbconnect');
 var promise = require('promise');
 var kid_model = require('../model/kidModel');
 var parent_model = require('../model/child_handler');
+var oracleConn = require('../oracleconnect');
+var jsonFormats = require('../jsonFormats');
 /* GET home page. */
+var oracledb = require('oracledb');
 
 var verifySession = function (req, res, next) {
     if (req.session.isLogged != undefined)
@@ -33,31 +36,44 @@ router.get('/stefan', verifySession, function (req, res, next) {
 });
 
 router.get('/', verifySession, function (req, res, next) {
-
-    /*
-     if (req.session.type == "parent") {
-     var parent = parentFactory().getInstance(req.session.id_user);
-     parent.getInformation(function (information) {
-     res.send(information);
-     });
-
-     }
-     */
-    var model;
-    if (req.session.type =='kid')
-        model = new kid_model();
-    else model = new parent_model();
-
-
-    model.getInitialInformation(req.session.id_user, function (error,values) {
+   /* var model
+    if(req.session.type=="parent")
+    model=  new parent_model();
+    else model= new kid_model();
+    model.get_notifications(req.session.id_user, {static_targets_id: -1}).then(function (values) {
         res.send(values);
-    }, function () {
-        res.send("error");
+    }).catch(function (error) {
+        res.send(error.message);
     });
-
-
+    */
+    res.render('index')
 
 });
+/*
+ if (req.session.type == "parent") {
+ var parent = parentFactory().getInstance(req.session.id_user);
+ parent.getInformation(function (information) {
+ res.send(information);
+ });
+
+ }
+
+
+ */
+//  var model;
+// if (req.session.type =='kid')
+//   model = new kid_model();
+// else model = new parent_model();
+
+
+//  model.getInitialInformation(req.session.id_user, function (error,values) {
+//    res.send(values);
+// }, function () {
+//   res.send("error");
+//});
+
+
+//}
 
 
 module.exports = router;

@@ -17,10 +17,12 @@ PubSub.prototype.publish= function(message) {
             }
         };
 PubSub.prototype.unsubscribe= function(handler){
-    for(i=0;i<this.handlers.length;i++){
+    for(var i=0;i<this.handlers.length;i++){
         if(handler==this.handlers[i])
             this.handlers.splice(i,1);
     }
-}
-var instance;
+};
+
+
+
 module.exports=PubSub;

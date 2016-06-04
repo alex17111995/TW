@@ -4,5 +4,5 @@
 module.exports={
     getChildChannelName:function(){return "kid"},
     getParentLocationChannel:function(){return "parent-location"},
-    getParentAdministrativeChannel: function () {"parent-administrative"}
-    }
+    getParentAdministrativeChannel: function () {return "parent-administrative"}
+    };

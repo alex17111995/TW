@@ -8,49 +8,105 @@ var PubSubFactory = require('../FactoryPubSub');
 var channels = require('../channels');
 var connection = require('./dbconnect');
 var kidMode = require('./kidModel');
+var notifications_parameters = require('../notifications_parameters');
+var oracleConn = require('../oracleconnect');
+var oracledb = require('oracledb');
+var jsonFormats = require('../jsonFormats')
 var child_handler = function () {
-}
+    console.log("debug");
+    return this;
+};
 
+var static_targets_of_parent_children = function (pid) {
 
-child_handler.prototype.listenChildrenForEvent = function (pid, callback) {
-    this.getChildren(pid, function (arrayKids) {
-        const callbackNotifier = function (kidEvent) {
-            this.unsubscribeChildren(callbackNotifier);
-            callback(kidEvent);
-        }.bind(this);
-        for (var i = 0; i < arrayKids.length; i++) {
-            var notifier = PubSubFactory(channels.getChildChannelName(), arrayKids[i]['kid']);
-            notifier.subs(callbackNotifier);
-        }
+    return new promise(function (resolve, reject) {
+        oracleConn.execute_SQL_leave_connection('BEGIN pack_kid_restrictions.get_static_targets_of_children(:pid, :cursor,:last_id); END;',
+            {
+                'pid': pid,
+                'cursor': {type: oracledb.CURSOR, dir: oracledb.BIND_OUT},
+                'last_id': {type: oracledb.INTEGER, dir: oracledb.BIND_OUT}
+            }
+        ).then(function (resultsAndConnection) {
+            var cursor = resultsAndConnection.results.outBinds.cursor;
+            oracleConn.getCursorResults(cursor, resultsAndConnection.connection).then(function (rows) {
+                jsonFormats.format_static_targets(resultsAndConnection.results.outBinds.last_id, rows).then(
+                    function (static_targets) {
+                        resolve(static_targets);
+                    }
+                ).catch(function (error) {
+                    reject(error);
+                });
+
+                oracleConn.releaseConnection(resultsAndConnection.connection)
+            }).catch(function (err) {
+                oracleConn.releaseConnection(resultsAndConnection.connection);
+                reject(err);
+            });
+        }).catch(function (err) {
+            reject(err);
+        });
+
     });
+
 };
 
-child_handler.prototype.unsubscribe_children = function (callbackNotifier) {
 
-}
-child_handler.prototype.validUser = function (username, password, callbackOK, callbackError) {
-    connection.query('select pid from parents where username=? and passwordHash=?', [username, password], function (err, rows, fields) {
-        console.log(err);
-        if (rows === undefined || rows.length === 0)
-            callbackError(err);
-        else callbackOK(rows[0]['pid']);
+var static_target_changes = function (pid, last_id) {
+
+    return new promise(function (resolve, reject) {
+        oracleConn.execute_SQL_leave_connection('BEGIN pack_kid_restrictions.get_changes_st_tar_kids(:pid, :cursor,:last_id); END;',
+            {
+                'pid': pid,
+                'cursor': {type: oracledb.CURSOR, dir: oracledb.BIND_OUT},
+                'last_id': {val: last_id, type: oracledb.INTEGER, dir: oracledb.BIND_INOUT}
+            }
+        ).then(function (resultsAndConnection) {
+            var cursor = resultsAndConnection.results.outBinds.cursor;
+            oracleConn.getCursorResults(cursor, resultsAndConnection.connection).then(function (rows) {
+                jsonFormats.format_static_targets(resultsAndConnection.results.outBinds.last_id, rows).then(
+                    function (static_targets) {
+                        resolve(static_targets);
+                    }
+                ).catch(function (error) {
+                    reject(error);
+                });
+
+                oracleConn.releaseConnection(resultsAndConnection.connection)
+            }).catch(function (err) {
+                oracleConn.releaseConnection(resultsAndConnection.connection);
+                reject(err);
+            });
+        }).catch(function (err) {
+            reject(err);
+        });
+
     });
+
 };
 
-child_handler.prototype.unsubscribe_children = function (callback) {
-    for (var i = 0; i < this.kids.length; i++) {
-        var notifier = this.kids[i].getNotifier();
-        notifier.unsubscribe(callback);
-    }
+var publish_new_location_on_tracked_children_pubsub = function (pid, latitude, longitude, isOnline, timestamp) {
+    oracleConn.executeSQL('select kid from dynamic_targets where pid=:pid',{
+        pid:pid
+    }).then(function (results) {
+            for (var i = 0; i < results.rows.length; ++i) {
+                var notifier = PubSubFactory(channels.getChildChannelName(), results.rows[i]);
+                notifier.publish({
+                    channel: 'update_dynamic_target_location',
+                    data: {
+                        pid: pid,
+                        latitude: latitude,
+                        longitude: longitude,
+                        is_online: isOnline,
+                        timestamp_last_update: timestamp
+                    }
+                });
+            }
+        })
+        .catch(function (error) {
+            console.log(error.message);
+        });
 };
 
-
-child_handler.prototype.stopListeningForEvent = function (callback) {
-    for (var i = 0; i < this.kids.length; i++) {
-        var notifier = this.kids[i].getNotifier();
-        notifier.unsubscribe(callback)
-    }
-};
 
 child_handler.prototype.getChildren = function (pid, callbackOK, callbackError) {
     //callback
@@ -118,7 +174,6 @@ child_handler.prototype.getInitialInformation = function (pid, callbackErrorInit
     var promiseEvents = new promise(function (resolve, reject) {
 
 
-
     }.bind(this));
 
     var promiseUsernameOfKid = new promise(function (resolve, reject) {
@@ -170,7 +225,7 @@ child_handler.prototype.getEvents = function (pid, lastTimestamp, callback) {
                 return true;
 
             });
-                callback({'children':arrayWithoutUndefiened});
+            callback({'children': arrayWithoutUndefiened});
             // else this.listenChildrenForEvent(callback);
 
 
@@ -180,51 +235,84 @@ child_handler.prototype.getEvents = function (pid, lastTimestamp, callback) {
     }.bind(this));
 };
 
+
+child_handler.prototype.get_notifications = function (pid) {
+    //TODO assure not duplicates
+    return new promise(function (resolve, reject) {
+        resolve({});
+    });
+
+};
+
+
+child_handler.prototype.get_new_notifications = function (pid, notification_types_required) {
+    return new promise(function (resolve, reject) {
+
+        var keys = Object.keys(notification_types_required);
+        var promises_db_queries = [];
+        for (var i = 0; i < keys.length; ++i) {
+            switch (keys[i]) {
+                case notifications_parameters.static_targets_query_string():
+                {
+                    var promise_static_targets = static_target_changes(pid, notification_types_required[keys[i]]);
+                    promises_db_queries.push(promise_static_targets);
+                }
+            }
+        }
+        promise.all(promises_db_queries).then(function (values) {
+            resolve(values);
+        }).catch(function (error) {
+            reject(error);
+        });
+
+    });
+};
+child_handler.prototype.get_children_of_handler = function (pid) {
+    return new promise(function (resolve, reject) {
+        oracleConn.executeSQL('select kid,permission,username,firstname,lastname from child handlers natural join children where pid=:pid and permission>0',
+            {
+                pid: pid
+            }).then(function (results) {
+            var resultsToReturn = [];
+            for (var i = 0; i < results.rows; i++) {
+                resultsToReturn.push({
+                    'kid': results.rows[i][0],
+                    'permission': results.rows[i][1],
+                    'username': results.rows[i][2],
+                    'first_name': results.rows[i][3],
+                    'last_name': results.rows[i][4]
+                });
+            }
+            resolve(resultsToReturn);
+
+        }).catch(function (error) {
+            reject(error);
+        });
+    });
+
+};
+
+
 child_handler.prototype.updateLocation = function (pid, information, callbackSuccessfulUpdated) {
     //TODO UPDATE DB
-    connection.beginTransaction(function (err) {
-        connection.query('select COUNT(*) from parent_location where pid=?', [pid], function (err, rows, fields) {
-            var timestamp = Date.now();
-            var sql_query = 'update parent_location set timestamp=? , latitude=? , longitude=? where pid=?';
-            if (err) {
-                process.nextTick(function () {
-                    callbackSuccessfulUpdated(err)
-                });
-                return;
-            }
-            if (rows[0]['COUNT(*)'] == 0) {
-                sql_query = 'insert into parent_location(timestamp,latitude,longitude,pid) values(?,?,?,?)';
-            }
-            connection.query(sql_query, [timestamp, information['latitude'], information['longitude'], pid], function (err, rows, fields) {
+    return new promise(function (resolve, reject) {
 
-                var object = {
-                    'longitude': information['longitude'],
-                    'latitude': information['latitude'],
-                    'online': true,
-                    'timestamp': timestamp
-                };
-                connection.commit(function (err) {
-                    if (err) {
-                        return connection.rollback(function () {
-                            throw  err
-                        });
-                    }
-                    process.nextTick(function () {
-                        var notifier = PubSubFactory(channels.getParentLocationChannel(), pid);
-                        callbackSuccessfulUpdated(object);
-                        notifier.publish(object);
-                    }.bind(this));
+        oracleConn.executeSQL('BEGIN update_location_parent(:pid,:latitude,:longitude,1,:timestamp_out); END;', {
+            pid: pid,
+            latitude: information['latitude'],
+            longitude: information['longitude'],
+            timestamp_out: {type: oracledb.STRING, dir: oracledb.BIND_OUT}
+        }).then(function (results) {
+                publish_new_location_on_tracked_children_pubsub(pid, information['latitude'],
+                    information['longitude'], 1, results.outBinds.timestamp_out);
+                resolve(true);
 
-                });
-            }.bind(this), function (err) {
-                process.nextTick(function () {
-                    callbackSuccessfulUpdated(err)
-                });
-            }.bind(this));
-
-        }.bind(this));
-    }.bind(this));
-
+            })
+            .catch(function (error) {
+                console.log(error.message);
+                reject(error)
+            });
+    });
 
 };
 child_handler.prototype.hasGoneOffline = function () {

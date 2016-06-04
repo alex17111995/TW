@@ -29,9 +29,12 @@ router.post('/', verifyAlreadyLogged, function (req, res, next){
     else
         object=new parent_model();
 
-    object.updateLocation(req.session.id_user,{'latitude':latitude,'longitude':longitude},function(response){
-       res.send(response);
-    });
+    object.updateLocation(req.session.id_user,{'latitude':latitude,'longitude':longitude}).then(function(resp){
+        res.send(resp);
+    })
+    .catch(function(err){
+        res.send(err.message);
+    })
 
 
 });
