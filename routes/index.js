@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var pubSub = require('../PubSub');
+var pubSub = require('../PubSub')
 var dbconnect = require('../model/dbconnect');
 var promise = require('promise');
 var kid_model = require('../model/kidModel');

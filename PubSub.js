@@ -22,7 +22,9 @@ PubSub.prototype.unsubscribe= function(handler){
             this.handlers.splice(i,1);
     }
 };
-
+PubSub.prototype.close = function () {
+    this.handlers=[];
+};
 
 
 module.exports=PubSub;

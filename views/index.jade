@@ -19,6 +19,9 @@ html
             socket.on('new_child_location', function (data) {
                 console.log(data);
             });
+            socket.on('blabla',function(data){
+               console.log(data);
+            });
 
             socket.on('deleted_static_target',function(data){
                console.log(data);

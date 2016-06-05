@@ -26,11 +26,16 @@ var fromRadians = function (radians) {
     return radians * 180 / Math.PI;
 }
 
+var MIN_LAT = toRadians(-90.0);  // -PI/2
+var  MAX_LAT = toRadians(90);   //  PI/2
+var  MIN_LON = toRadians(-180); // -PI
+var MAX_LON = toRadians(180);
+
 var boundingBox = function (latitude, longitude, distanceInKM) {
-    var earthRadius = 6371.1;
+    var radius = 6371.1;
     var radLat = toRadians(latitude);
-    var radLong = toRadians(longitude);
-    var radDist = distance / radius;
+    var radLon = toRadians(longitude);
+    var radDist = distanceInKM / radius;
     var minLat = radLat - radDist;
     var maxLat = radLat + radDist;
     var minLon, maxLon;

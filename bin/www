@@ -6,7 +6,7 @@
 
 var app_exports = require('../app');
 var app=app_exports.app;
-var socket_controller= require('../socket_controller');
+var socket_controller= require('../socketController');
 var debug = require('debug')('untitled1:server');
 var oracleDB = require('../oracleconnect');
 var http = require('http');

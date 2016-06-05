@@ -35,7 +35,7 @@ var commit_and_close = function (connection) {
 
 var rollback_and_close = function (connection) {
     return new promise(function (resolve, reject) {
-        connection.rollback.then(function () {
+        connection.rollback().then(function () {
             releaseConnection(connection);
             resolve(true);
 
@@ -131,8 +131,18 @@ module.exports = {
 
     },
     getCursorResults: getCursorResults,
-    commit_and_close:commit_and_close,
-    rollback_and_close:rollback_and_close,
+    commit_and_close: commit_and_close,
+    rollback_and_close: rollback_and_close,
+    execute_query_connection: function (connection, query, bind) {
+        return new promise(function (resolve, reject) {
+            connection.execute(query, bind).then(function (r) {
+                    resolve(r);
+                })
+                .catch(function (error) {
+                    reject(error);
+                })
+        });
+    },
     execute_SQL_leave_connection: function (query, bind) {
         if (bind === undefined)
             bind = [];
