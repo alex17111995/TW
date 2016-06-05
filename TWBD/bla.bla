@@ -1,0 +1,42 @@
+
+PE astea LE PRIMESTE SERVERUL
+request_child_access: kid,permission 0 sau 1 
+accept_child_request: pid,kid,permission -- 2 sau 4 
+reject_child_request : pid,kid 
+add_parent_to_child : pid,kid permission - 2 sau 4 
+remove_parent_from_child : pid,kid,permissioj - 2 , 3 sau 4  //am
+cancel_request pid,kid  
+change_permission: pid,kid,permission 2 sau 4  //pe astea le primesti doar pe copil 
+
+
+
+
+
+PE ASTEA LE PRIMESTI PE CLIENT
+
+parent_removed pid,kid
+parent_added  kid,pid,numeUser,permission   //primesti pe copil asta
+parent_status_changed kid,pid,newPermission //primesti pe copil asta..tre sa verifici tu daca esti ala cu statusul schimbat 
+
+kid_request kid,permission,nameUser --permisiunea va fi 0 sau 1  primita de cei care vor sa taburile parintelui care vrea 
+
+
+kid_removed kid  //le primesti pe parinte aste
+kid_added structura_child,permission //aici tre sa scoti pending invite-u de pe ui
+kid_request_rejected kid
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
