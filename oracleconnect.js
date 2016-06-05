@@ -46,8 +46,6 @@ var rollback_and_close = function (connection) {
         });
     });
 };
-
-
 var releaseConnection = function (connection) {
     process.nextTick(function () {
         connection.release(function (err) {
@@ -57,6 +55,8 @@ var releaseConnection = function (connection) {
         });
     });
 };
+
+
 var closeCursor = function (cursor, connection) {
     return new promise(function (resolve, reject) {
         cursor.close(function (err) {
@@ -133,9 +133,9 @@ module.exports = {
     getCursorResults: getCursorResults,
     commit_and_close: commit_and_close,
     rollback_and_close: rollback_and_close,
-    execute_query_connection: function (connection, query, bind) {
+    execute_query_connection: function (connection, query, bind,options) {
         return new promise(function (resolve, reject) {
-            connection.execute(query, bind).then(function (r) {
+            connection.execute(query, bind,options).then(function (r) {
                     resolve(r);
                 })
                 .catch(function (error) {

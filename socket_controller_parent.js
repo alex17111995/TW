@@ -6,6 +6,7 @@ var childHandlerModel = require('./model/child_handler');
 var channels = require('./Channels');
 var PubSubFactory = require('./FactoryPubSub');
 var promise = require('promise');
+
 var validate_static_target_input = function (data) {
     return (Number.isInteger(data.kid) && Number.isInteger(data.radius) && (data.latitude >= -85.05115 && data.latitude <= 85)
     && (data.longitude >= -180 && data.longitude <= 180));
@@ -103,6 +104,7 @@ var socket_controller = function (socket) {
                     })
                     .catch(function (error) {
                         socket.emit('blabla', error.message);
+                        console.log(error.message);
                     });
 
             });
@@ -128,8 +130,14 @@ var socket_controller = function (socket) {
 
 
             socket.on('add_static_target', function (data) {
-                if (!validate_static_target_input(data))
-                    return;
+              //  data.radius = Math.floor(data.radius);
+                data.kid = Number.parseInt(data.kid);
+                data.kid = Number.parseInt(data.kid);
+              //  var validated = validate_static_target_input(data);
+               // console.log(validated);
+
+//                if (!validated)
+  //                  socket.emit('err', 'invalid_data');
                 model.add_static_target(socket.request.session.id_user, data.kid, data.longitude, data.latitude, data.radius)
                     .then(function (result) {
 
@@ -142,9 +150,11 @@ var socket_controller = function (socket) {
 
             model.get_notifications(socket.request.session.id_user).then(function (initial_events) {
                 socket.emit('initial_object', initial_events);
+                console.log('merge');
 
             }).catch(function (error) {
                 socket.emit('error', error.message);
+                console.log(error.message);
             });
 
 

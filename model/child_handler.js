@@ -62,9 +62,9 @@ var get_subscribed_and_pending_children_and_subscribed_notifications = function 
         get_children_of_handler(pid).then(function (children_of_handler) {
                 get_notifications_of_children(children_of_handler)
                     .then(function (children_notification_list) {
-                        resolve({
+                        resolve(
                             children_notification_list
-                        });
+                        );
 
                     }).catch(function (error) {
                     reject(error);
@@ -90,7 +90,12 @@ var get_user_information = function (pid) {
                 reject(new Error('invalid-user'));
             }
             else {
-                resolve(results.rows[0]);
+                resolve({
+                    pid: results.rows[0][0],
+                    username: results.rows[0][1],
+                    first_name: results.rows[0][2],
+                    last_name: results.rows[0][3]
+                });
             }
         });
     });
@@ -139,9 +144,94 @@ var get_children_of_handler = function (pid) {
     });
 
 };
+child_handler.prototype.register_kid = function (pid, information) {
+    return new promise(function (resolve, reject) {
+
+        oracleConn.executeSQL('BEGIN pack_auth.register_child(:pid,:username,:password,:first_name,:last_name,:kid',
+            {
+                pid: pid,
+                username: information['username'],
+                password: information['password'],
+                first_name: information['first_name'],
+                last_name: information['last_name'],
+                kid: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT}
+
+            })
+            .then(function (result) {
+                resolve('OK');
+                var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_to_add);
+                notifierParent.publish({
+                        'channel': 'new_child',
+                        'kid': result.outBinds.kid
+                    }
+                );
+
+            })
+            .catch(function (error) {
+                reject(error);
+
+            });
+    });
+
+};
 
 
-child_handler.prototype.updateLocation = function (pid, information, callbackSuccessfulUpdated) {
+child_handler.prototype.search_parents=function(pid,kid,pattern){
+
+
+};
+
+
+
+child_handler.prototype.kids_nearby = function (pid, kid) {
+    return new promise(function (resolve, reject) {
+        oracleConn.getConnection()
+            .then(function (connection) {
+                verify_rights(connection, pid, kid)
+                    .then(function () {
+                        return oracleConn.execute_query_connection(connection, 'select latitude,longitude from child_location' +
+                            'where kid=:kid and is_online=1', {kid: kid}, {autoCommit: true})
+                    })
+                    .then(function (result) {
+                        if (result.rows.length == 0) {
+                            reject(new Error('kid is offline'))
+                        }
+                        return oracleConn.execute_query_connection(connection, 'select kid,username,firstname,lastname from children' +
+                            ' natural join children_location where distance(:latitude,:longitude,latitude,longitude)<100 ' +
+                            'and is_online=1', {
+                            latitude: result.rows[0],
+                            longitude: result.rows[1]
+                        }, {autoCommit: true});
+                    }).then(function (kid_username_first_name_lastName) {
+                        var array_object = [];
+                        for (var i = 0; i < kid_username_first_name_lastName.rows.length; ++i) {
+                            array_object.push({
+                                kid: kid_username_first_name_lastName[i][0],
+                                username: kid_username_first_name_lastName[i][1],
+                                first_name: kid_username_first_name_lastName[i][2],
+                                last_name: kid_username_first_name_lastName[i][3]
+                            });
+                        }
+                        resolve(array_object);
+                        oracleConn.releaseConnection(connection);
+                    })
+                    .catch(function (error) {
+                        oracleConn.releaseConnection(connection);
+                        reject(error);
+                    });
+
+
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+
+    });
+
+};
+
+
+child_handler.prototype.updateLocation = function (pid, information) {
     //TODO UPDATE DB
     return new promise(function (resolve, reject) {
 
@@ -205,7 +295,7 @@ var verify_rights = function (connection, pid, kid) {
             {
                 kid: kid,
                 pid: pid
-            }).then(function (results) {
+            }, {autoCommit: true}).then(function (results) {
                 if (results.rows[0] == 0) {
                     reject(new Error('no permission'));
                 }
@@ -230,7 +320,7 @@ child_handler.prototype.delete_parent_of_child = function (pid_granting_access, 
                     reject(new Error('no permission'));
                 }
                 else {
-                    var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_to_add);
+                    var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_to_delete);
                     var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
                     notifierParent.publish({
                             'channel': 'deleted_child',

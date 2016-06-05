@@ -9,7 +9,7 @@ var oracleConn = require('../oracleconnect');
 var jsonFormats = require('../jsonFormats');
 /* GET home page. */
 var oracledb = require('oracledb');
-
+var path= require('path');
 var verifySession = function (req, res, next) {
     if (req.session.isLogged != undefined)
         next();
@@ -46,7 +46,8 @@ router.get('/', verifySession, function (req, res, next) {
         res.send(error.message);
     });
     */
-    res.render('index')
+    res.sendFile(path.join(__dirname,'../public', 'index-1.html'));
+   // res.render('index');
 
 });
 /*

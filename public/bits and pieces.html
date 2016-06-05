@@ -1,0 +1,143 @@
+<html>
+
+<head>
+    <script src="http://maps.googleapis.com/maps/api/js"></script>
+    <script>
+        var map;
+
+        function loadMap() {
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: new google.maps.LatLng(47.165528, 27.560970)
+                , zoom: 13
+                , mapTypeId: google.maps.MapTypeId.ROADMAP
+                , disableDefaultUI: true
+            });
+        }
+        google.maps.event.addDomListener(window, 'load', loadMap);
+        
+                function displayKidRegisterWindow() {
+            var regWindow = document.createElement("e");
+            var registrationWindowCode = "<div id=\"registerWindow\" class=\"mdl-shadow--16dp\">";
+                 registrationWindowCode += "<button class=\"mdl-button mdl-js-button mdl-button--icon mdl-button--colored\" style = \"position: absolute; right: 15px; top: 10px;\" onclick = \"closeKidRegisterWindow()\"><i class=\"material-icons\">close</i></button>";
+                 registrationWindowCode += "<h3><span style=\"color:dodgerblue;position: relative;left: 130px\">Register a child</span></h3>";
+                 registrationWindowCode += "<div style=\"width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
+                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"usernameField\" required>";
+                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"usernameField\">Username</label></div></div>";
+                 registrationWindowCode += "<div style=\"width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
+                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"passwordField\" required>";
+                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"passwordField\">Password</label></div></div>";
+                 registrationWindowCode += "<div style=\"width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
+                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"FirstNameField\" required>";
+                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"FirstNameField\">First Name</label></div></div>";
+                 registrationWindowCode += "<div style=\"width: 120px;height: 50px;position: absolute;top:188px;right: 125px;\">";
+                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"LastNameField\" required>";
+                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"LastNameField\">Last Name</label></div></div>";
+                 registrationWindowCode += " <button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\" style=\"width:150px;height:50px;position: absolute; top: 300px;left:175px;\" onclick=\"sendInput();closeKidRegisterWindow()\">Register</button></div>";
+
+            document.getElementById('registrationArea').appendChild(regWindow).innerHTML = registrationWindowCode;
+        }
+        
+        
+        
+        
+    </script>
+
+
+
+    <title>Kido Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.min.js"></script>
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.blue-red.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="components.css">
+
+</head>
+
+<body onload="loadMap()">
+
+    <div id="shit">
+        <div id="kidCard+childID" class="kid-card mdl-shadow--16dp">
+            <div class="kid-card-top">
+                <button class="kid-button mdl-button mdl-js-button mdl-js-ripple-effect">Alexandru</button>
+                <button id="kidMenu1" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">more_vert</i></button>
+                <ul for="kidMenu1" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect">
+                    <li class="mdl-menu__item">Add Static Target</li>
+                    <li class="mdl-menu__item">Proximity Alert</li>
+                    <li class="mdl-menu__item">Stop following</li>
+                    <li class="mdl-menu__item">Nearby kids</li>
+                </ul>
+            </div>
+            <div class="mdl-card__actions mdl-card--border">
+                <div class="staticTargets">
+                    <div id="staticTarget+staticTargetID">
+                        <button id="staticTargetID" class="st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect">Area 12</button>
+                        <span style="position: relative;left: 5px;">
+                                    <label class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" id = "test" for="icon-toggle-1">
+                                        <input type="checkbox" id="icon-toggle-1" class="mdl-icon-toggle__input" onclick = "toggleEdit('1')">
+                                        <i class="mdl-icon-toggle__label material-icons">mode_edit</i>
+                                    </label>&#160;&#160;
+                                    <button id="kid-menu-test" class="mdl-button mdl-js-button mdl-button--icon" onclick = "deleteArea('1')"><i class="material-icons">delete</i></button></span>
+                    </div>
+                </div>
+                <div class="dynamicTargets">
+                    <button id="dynamicTargetID" class="dt-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect">Ciuc Tiberiu</button>
+                    <button id="dynamicTargetID2" class="dt-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect">Cock-ul lui ciuc</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="notification-area">
+        <div class="management-notification-card mdl-card mdl-shadow--8dp">
+            <div class="mdl-card__title mdl-card--border">
+                <h2 class="mdl-card__title-text">Management <br/> Request</h2>
+            </div>
+            <div class="mdl-card__supporting-text">vladut has requested management rights for sorana</div>
+            <div class="mdl-card__actions mdl-card--border">
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary">Accept</button>
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Decline</button>
+            </div>
+        </div>
+        <!--Management Notification Example-->
+    </div>
+
+    <div id="registerWindow" class="mdl-shadow--16dp">
+        <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" style = "position: absolute; right: 15px; top: 10px;" onclick = "closeKidRegisterWindow()"><i class="material-icons">close</i></button>
+        <h3><span style="color:dodgerblue;position: relative;left: 130px">Register a child</span></h3>
+        <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="usernameField" required>
+                <label class="mdl-textfield__label" for="sample3">Username</label>
+            </div>
+        </div>
+        <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="passwordField" required>
+                <label class="mdl-textfield__label" for="sample3">Password</label>
+            </div>
+        </div>
+        <div style="width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="FirstNameField" required>
+                <label class="mdl-textfield__label" for="sample3">First Name</label>
+            </div>
+        </div>
+        <div style="width: 120px;height: 50px;position: absolute;top:188px;right: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="LastNameField" required>
+                <label class="mdl-textfield__label" for="sample3">Last Name</label>
+            </div>
+        </div>
+
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="width:150px;height:50px;position: absolute; top: 300px;left:175px;" onclick="sendInput();closeKidRegisterWindow()">Register</button>
+    </div>
+
+
+</body>
+
+</html>

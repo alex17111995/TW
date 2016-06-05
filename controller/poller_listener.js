@@ -21,22 +21,28 @@ var http = require('http');
 
 
 var parse_incidents = function (json_bing) {
-    return promise(function (resolve) {
+    return new promise(function (resolve, reject) {
+        process.nextTick(function () {
+            var bingJson = JSON.parse(json_bing);
+            if (bingJson == undefined)
+                reject(new Error('invalid JSON from poller'));
+            var resourceSets = bingJson['resourceSets'];
+            var incidentsArrayToAdd = [];
+            for (var i = 0; i < resourceSets.length; ++i) {
+                var resources = resourceSets[i].resources;
+                for (var j = 0; j < resources.length; j++) {
 
-        var incidentsArray = json_bing.resourceSets;
-        var incidentsArrayToAdd = [];
-        for (var i = 0; i < incidentsArray; ++i) {
-            incidentsArrayToAdd.push({
-                latitude: incidentsArray[i].point[0],
-                longitude: incidentsArray[i].point[1],
-                type: incidentsArray[i].type,
-                start: eval(incidentsArray[i].start.filter(function (letter) {
-                    return letter != '\\' && letter != '/'
-                }))
-            });
+                    incidentsArrayToAdd.push({
+                        latitude: resources[j].point.coordinates[0],
+                        longitude: resources[j].point.coordinates[1],
+                        type: resources[j].type,
+                        start: resources[j].start
+                    });
+                }
+            }
 
-        }
-        resolve(incidentsArrayToAdd)
+            resolve(incidentsArrayToAdd)
+        });
     });
 
 };
@@ -68,8 +74,11 @@ var request_promise = function (options) {
 var poll_events = function (latitude, longitude) {
     return new promise(function (resolve, reject) {
         var bounding_box = geometry_functions.boundingBox(latitude, longitude, 10);
-        request_promise(getOptions(bounding_box)).then(function (response) {
-                resolve(response);
+        request_promise(getOptions(bounding_box))
+            .then(function (response) {
+                return parse_incidents(response);
+            }).then(function (responsonseParsed) {
+                resolve(responsonseParsed);
             })
             .catch(function (error) {
                 reject(error);
@@ -92,7 +101,9 @@ var start_polling = function (poller_listener) {
                                 events: results,
                                 kid: poller_listener.kid
                             }
+
                         });
+                        console.log(results);
                     }
                 }).catch(function (error) {
                     console.log(error);

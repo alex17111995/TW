@@ -3,7 +3,7 @@
  */
 var express = require('express');
 var authenticate = require('../model/authenticate');
-var register=require('../model/registerParent');
+var register = require('../model/registerParent');
 var router = express.Router();
 /* GET users listing. */
 var verifyAlreadyLogged = function (req, res, next) {
@@ -12,7 +12,7 @@ var verifyAlreadyLogged = function (req, res, next) {
         return;
     }
     next();
-}
+};
 
 router.get('/', verifyAlreadyLogged, function (req, res, next) {
     res.render('login', {title: 'Login'});
@@ -55,10 +55,10 @@ router.get('/register', verifyAlreadyLogged, function (req, res, next) {
     res.render('login', {title: 'Register'});
 });
 router.post('/register', verifyAlreadyLogged, function (req, res, next) {
-    register(req.body.username,req.body.password).then(function(){
+    register(req.body.username, req.body.password).then(function () {
         res.send('OK');
-    }).catch(function(err){
-       res.send(err.message);
+    }).catch(function (err) {
+        res.send(err.message);
     });
 });
 

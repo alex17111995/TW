@@ -1,0 +1,532 @@
+<html>
+
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript"
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxetv4Nz-l2t47HuUuMocoVhC5yy07MDI&libraries=drawing"></script>
+    <script type="text/javascript">
+        var kidMap, targetDrawer, staticTargetKidID;
+        var alertCount = 0;
+        var requestCount = 0;
+        var initialObject = {
+            "credentials": {
+                "pid": 2
+                , "username": "Alexandru Sebastian"
+                , "first_name": "Alexandru"
+                , "last_name": "Sebastian"
+            }
+            , "children": [
+                {
+                    kid_location_and_name: {
+                        first_name: "Ciuc"
+                        , last_name: "Tiberiu"
+                        , latitude: 47.2134086
+                        , longitude: 27.506618208900048
+                        , username: "ctiby777"
+                        , kid: 3
+                        , is_online: true
+                        , last_update_timestamp: 8457
+                    }
+                    , "dynamic_targets": [
+                    {
+                        "radius_dynamic_target": 100
+                        , "latitude": 47.1584549
+                        , "longitude": 27.60144179576599975
+                        , "pid": 5
+                        , "last_timestamp_update": 8234
+                        , is_online: false
+                    }
+                ]
+                    , "static_targets": [
+                    {
+                        "radius": 500
+                        , "static_target_id": 2
+                        , "latitude": 47.1584546
+                        , "longitude": 27.60144179576587975
+                    }, {
+                        "radius": 20
+                        , "targetID": 1
+                        , "latitude": 47.1584546565865685
+                        , "longitude": 27.60144179576587456
+                    }
+                ]
+                    , "child_handlers": [
+                    {
+                        "pid": 5
+                        , "first_name": "Vasile"
+                        , "last_name": "Bengosu"
+                        , "username": "Vasilescu"
+                        , "is_dynamic_target": true
+
+                    }
+                ]
+                }
+            ]
+        };
+
+
+        function loadMap() {
+
+            kidMap = new google.maps.Map(document.getElementById("map"), {
+                center: new google.maps.LatLng(47.165528, 27.560970)
+                , zoom: 13
+                , mapTypeId: google.maps.MapTypeId.ROADMAP
+                , disableDefaultUI: true
+                , scaleControl: true
+                , scaleControlOptions: {
+                    position: google.maps.ControlPosition.BOTTOM_LEFT
+                }
+            });
+
+            targetDrawer = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.CIRCLE
+                , drawingControl: false
+                , drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER
+                    , drawingModes: [google.maps.drawing.OverlayType.MARKER, google.maps.drawing.OverlayType.CIRCLE]
+                }
+                , circleOptions: {
+                    strokeColor: '#333F4F'
+                    , strokeOpacity: 1
+                    , strokeWeight: 1
+                    , fillColor: getRandomColor()
+                    , fillOpacity: 0.4
+                    , map: kidMap
+                    , editable: false
+                    , draggable: false
+                }
+            });
+
+            targetDrawer.setMap(null);
+            google.maps.event.addListener(targetDrawer, 'circlecomplete', function (circle) {
+                sendTargetToServer(circle);
+                circle.setMap(null);
+            });
+        }
+        google.maps.event.addDomListener(window, 'load', loadMap);
+
+
+        function enableStaticTargetDrawing(kid) {
+            targetDrawer.setMap(kidMap);
+            staticTargetKidID = kid;
+        }
+
+        function sendTargetToServer(circle) {
+            var newStaticTarget = {
+                "kid": staticTargetKidID
+                , "radius": circle.getRadius()
+                , "latitude": circle.getCenter().lat()
+                , "longitude": circle.getCenter().lng()
+            }
+
+            targetDrawer.setMap(null);
+            sendToServer(newStaticTarget);
+        }
+
+        function getHandlerNameByPID(kid, pid) {
+            var i, j, handlerName = "error loading name";
+
+            for (i = 0; i < initialObject.children.length; i++) {
+                if (initialObject.children[i].kid_location_and_name.kid == kid) {
+                    for (j = 0; j < initialObject.children[i].child_handlers.length; j++) {
+                        if (initialObject.children[i].child_handlers[j].pid == pid) {
+                            handlerName = initialObject.children[i].child_handlers[j].username;
+                        }
+                    }
+                }
+            }
+            return handlerName;
+        }
+
+        var staticTargets = [];
+
+        function addTarget(targetInfo) {
+
+            staticTargets[targetInfo.static_target_id] = new google.maps.Circle({
+                strokeColor: '#333F4F'
+                , strokeOpacity: 1
+                , strokeWeight: 1
+                , fillColor: getRandomColor()
+                , fillOpacity: 0.4
+                , map: kidMap
+                , editable: false
+                , draggable: false
+                , center: new google.maps.LatLng(targetInfo.latitude, targetInfo.longitude)
+                , radius: targetInfo.radius
+                ,
+            })
+        }
+
+        function getRandomColor() {
+            var colorPallete = ["#E57373", "#304FFE", "#D50000", "#8C9EFF", "#66BB6A", "#EEFF41", "#FF6E40", "#00BFA5", "#607D8B", "#18FFFF", "#82B1FF", "#E91E63", "#F44336", "#8BC34A", "#FFEB3B", "#6D4C41"];
+            color = colorPallete[Math.floor(Math.random() * 16)]
+            return color;
+        }
+
+        function dismissAlert(alertID) {
+            document.getElementById("alert" + alertID).parentNode.parentNode.removeChild(document.getElementById("alert" + alertID).parentNode);
+        }
+
+
+        var requestNotification = {
+            childID: 3
+            , childName: "ctiby777"
+            , senderID: 4
+            , senderName: "Not-a-pedo"
+            , requestType: 3
+        };
+
+        function acceptViewingRequest(senderID, targetID, notificationID) {
+            //ON HOLD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            document.getElementById("")
+        }
+
+        function generateManagementNotification(requestInfo) {
+            var notificationCode = "";
+            notificationCode += "<div id =\"managementRequest" + requestCount + "\" class=\"management-notification-card mdl-card mdl-shadow--8dp\">";
+            notificationCode += "<div class=\"mdl-card__title mdl-card--border\">";
+            notificationCode += "<h2 class=\"mdl-card__title-text\">Management <br/> Request</h2></div>";
+            notificationCode += "<div class=\"mdl-card__supporting-text\">" + requestInfo.senderName + " has requested management rights for " + requestInfo.childName + "!</div>";
+            notificationCode += "<div class=\"mdl-card__actions mdl-card--border\">";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\"> Accept </button>&#160;  &#160;";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\"> Decline </button></div></div>";
+            return notificationCode;
+
+        }
+
+        function generateViewNotification(requestInfo) {
+            var notificationCode = "";
+            notificationCode += "<div id =\"viewRequest" + requestCount + "\" class=\"viewing-notification-card mdl-card mdl-shadow--8dp\">";
+            notificationCode += "<div class=\"mdl-card__title mdl-card--border\">";
+            notificationCode += "<h2 class=\"mdl-card__title-text\">Viewing <br/> Request</h2></div>";
+            notificationCode += "<div class=\"mdl-card__supporting-text\">" + requestInfo.senderName + " has requested viewing rights for " + requestInfo.childName + "!</div>";
+            notificationCode += "<div class=\"mdl-card__actions mdl-card--border\">";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\"> Accept </button>&#160;  &#160;";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\"> Decline </button></div></div>";
+            return notificationCode;
+        }
+
+        function generateAlertNotification(senderName, targetName, messageText) {
+            var notificationCode = "";
+            notificationCode += "<div id=\"alert" + alertCount + "\" class=\"alert-notification-card mdl-card mdl-shadow--8dp\">";
+            notificationCode += "<div class=\"mdl-card__title mdl-card--border\">";
+            notificationCode += "<h2 class=\"mdl-card__title-text\">Alert!</h2></div>";
+            notificationCode += "<div class=\"mdl-card__supporting-text\">" + targetName + " " + messageText + "!</div>";
+            notificationCode += "<div class=\"mdl-card__actions mdl-card--border\">";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" onclick = \"dismissAlert('" + (alertCount++) + "')\"> Dismiss </button></div></div>";
+            return notificationCode;
+
+        }
+
+        function displayNotification(requestNotification) {
+            var newNotification = document.createElement("e");
+            document.getElementById('notification-holder').insertBefore(newNotification, document.getElementById('notification-holder').childNodes[0]).innerHTML = generateNotificationCode(requestNotification);
+        }
+
+        function generateNotificationCode(requestNotification) {
+            if (requestNotification.status == 0 || requestNotification.status) return generateViewNotification(requestNotification);
+            else if (requestNotification.status == 1) return generateManagementNotification(requestNotification);
+            else if (requestNotification.status == 2) return generateAlertNotification(sender, target, message);
+        }
+
+        function deleteStaticTarget(targetID) {
+            socket.emit('delete_static_target', targetID);
+        }
+
+        function toggleEdit(targetID) {
+            if (staticTargets[targetID].editable == false)
+                staticTargets[targetID].set('editable', true);
+            else staticTargets[targetID].set('editable', false);
+        }
+
+        function centerOnStaticTarget(targetID) {
+            kidMap.panTo(staticTargets[targetID].getCenter());
+            kidMap.setZoom(16);
+        }
+
+        function centerOnChild(kidID) {
+            var i = 0;
+            for (i = 0; i < initialObject.children.length; i++) {
+                if (initialObject.children[i].kid_location_and_name.kid == kidID) {
+                    kidMap.panTo(new google.maps.LatLng(initialObject.children[i].kid_location_and_name.latitude, initialObject.children[i].kid_location_and_name.longitude));
+                    kidMap.setZoom(14);
+                }
+            }
+        }
+
+        function loadUsername() {
+            var currentUser = document.createElement("e");
+            document.getElementById('username').appendChild(currentUser).innerHTML = initialObject.credentials.username;
+        }
+
+        function loadKids() {
+            var i = 0;
+            for (i = 0; i < initialObject.children.length; i++) {
+                var newKidCard = document.createElement("p");
+                var childCardCode = generateChildCard(initialObject.children[i]);
+                document.getElementById('kid-card-holder').appendChild(newKidCard).innerHTML = childCardCode;
+            }
+            var newKidCard = document.createElement("p");
+            document.getElementById('kid-card-holder').appendChild(newKidCard).innerHTML = "<br/><br/><br/><br/><br/><br/>";
+        }
+
+        function generateChildCard(childInfo) /*TO DO: Script for top right menu*/ {
+            var cardCode = "<div id = \"kidCard" + childInfo.kid_location_and_name.kid + "\" class=\"kid-card mdl-shadow--8dp\">";
+            cardCode += "<div class=\"kid-card-top\">";
+            cardCode += "<button class=\"kid-button mdl-button mdl-js-button mdl-js-ripple-effect\" onclick = \"centerOnChild('" + childInfo.kid_location_and_name.kid + "'\);\">" + childInfo.kid_location_and_name.username + "</button>";
+            cardCode += "<button id=\"kidMenu" + childInfo.kid_location_and_name.kid + "\" class=\"mdl-button mdl-js-button mdl-button--icon\"><i class=\"material-icons\">more_vert</i></button>";
+            cardCode += "<ul for=\"kidMenu" + childInfo.kid_location_and_name.kid + "\" class=\"mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect\">";
+            cardCode += "<li class=\"mdl-menu__item\" onclick = \"enableStaticTargetDrawing('" + childInfo.kid_location_and_name.kid + "')\"\"    \">Add Static Target</li>"; //Add Script for target drawing
+            cardCode += "<li class=\"mdl-menu__item\" onclick = \"    \">Proximity Alert</li>"; //Add Script for proximity alert
+            cardCode += "<li class=\"mdl-menu__item\" onclick = \"    \">Stop following</li>"; //Add Script for removing child
+            cardCode += "<li class=\"mdl-menu__item\" onclick = \"    \">Nearby kids</li></ul></div>"; //Add Script for nearby kid info
+            cardCode += "<div class=\"mdl-card__actions mdl-card--border\">";
+            cardCode += "<div class=\"staticTargets\">" + generateStaticTargets(childInfo.static_targets) + "</div>";
+            cardCode += "<div class=\"dynamicTargets\">" + generateDynamicTargets(childInfo.kid_location_and_name.kid, childInfo.dynamic_targets) + "</div></div></div>";
+            return cardCode;
+        }
+
+        function generateStaticTargets(staticTargetsInfo) {
+            var i = 0;
+            var targetCode = "";
+            for (i = 0; i < staticTargetsInfo.length; i++) {
+                addTarget(staticTargetsInfo[i]);
+                targetCode += "<div id=\"staticTarget" + staticTargetsInfo[i].static_target_id + "\">";
+                targetCode += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\" onclick = \"centerOnStaticTarget('" + staticTargetsInfo[i].static_target_id + "')\">Area " + (i + 1) + "</button>";
+                targetCode += "<span style=\"position: relative;left: 5px;\">";
+                targetCode += "<label class=\"mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect\" for=\"editToggle" + staticTargetsInfo[i].targetID + "\">";
+                targetCode += "<input type=\"checkbox\" id=\"editToggle" + staticTargetsInfo[i].static_target_id + "\" class=\"mdl-icon-toggle__input\" onclick = \"toggleEdit('" + staticTargetsInfo[i].static_target_id + "')\">";
+                targetCode += "<i class=\"mdl-icon-toggle__label material-icons\">mode_edit</i>";
+                targetCode += "</label>&#160; &#160;";
+                targetCode += "<button class=\"mdl-button mdl-js-button mdl-button--icon\" onclick = \"deleteStaticTarget('" + staticTargetsInfo[i].static_target_id + "')\"><i class=\"material-icons\">delete</i></button></span></div>";
+            }
+            return targetCode;
+        }
+
+        function generateDynamicTargets(kid, dynamicTargetsInfo) {
+            var i = 0;
+            targetsCode = "";
+            for (i = 0; i < dynamicTargetsInfo.length; i++) {
+                targetsCode += "<button id=\"dynamicTarget" + dynamicTargetsInfo[i].pid + "\" class=\"dt-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\">" + getHandlerNameByPID(kid, dynamicTargetsInfo[i].pid) + "</button>";
+            }
+            return targetsCode;
+        }
+        /*
+         socket.emit('add_static_target', {
+         'kid': 1,
+         'latitude': 20,
+         'longitude': 20,
+         'radius': 10
+         });
+         socket.on('initial_object', function (data) {
+         console.log(data);
+         });
+         socket.on('error', function (data) {
+         console.log(data);
+         });
+         socket.on('new_child_location', function (data) {
+         console.log(data);
+         });
+
+         socket.on('deleted_static_target',function(data){
+         console.log(data);
+         });
+         socket.on('new_static_target', function (data) {
+         console.log(data);
+         socket.emit('delete_static_target',{
+         kid:data.kid,
+         static_target_id:data.static_target_id
+         });
+         });*/
+        function displayKidRegisterWindow() {
+            document.getElementById('registerWindow').style.zIndex = "10";
+        }
+
+        function closeKidRegisterWindow() {
+            document.getElementById('registerWindow').style.zIndex = "0";
+        }
+
+        function sendInput() {
+            // socket.emit('registerKid', {})
+            var registrationInformation = {
+                parrentID: initialObject.parentID
+                , username: document.getElementById("usernameField").value
+                , password: document.getElementById("passwordField").value
+                , first_name: document.getElementById("firstNameField").value
+                , last_name: document.getElementById("lastNameField").value
+            };
+
+            // SEND THIS TO THE SERVER!!!!!!!!!!!!!!!!
+
+            document.getElementById("usernameField").value = '';
+            document.getElementById("passwordField").value = '';
+            document.getElementById("firstNameField").value = '';
+            document.getElementById("lastNameField").value = '';
+
+        }
+        var socket;
+
+        socket = io();
+        socket.on('initial_object', function (data) {
+            generateShit(data);
+            console.log(data);
+        });
+        socket.on('blabla', function (data) {
+            console.log(data);
+        });
+
+        socket.on('deleted_static_target', function (data) {
+
+            staticTargets[data.static_id].setMap(null);
+            document.getElementById("staticTarget" + targetID).parentNode.removeChild(document.getElementById("staticTarget" + targetID));
+        });
+
+        function sendToServer(newTarget) {
+            socket.emit('add_static_target', {
+                'kid': newTarget.kid
+                , 'latitude': newTarget.latitude
+                , 'longitude': newTarget.longitude
+                , 'radius': newTarget.radius
+            });
+        }
+
+        function generateShit(object) {
+            initialObject = object;
+            loadKids();
+            loadUsername();
+        }
+
+        /* function renderPage() {
+         loadKids();
+         loadUsername();
+         }
+         */
+    </script>
+
+
+    <title>Kid Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script defer src="https://code.getmdl.io/1.1.3/material.min.js"></script>
+
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.blue-red.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="components.css">
+
+</head>
+
+<body>
+
+<div class="interface-area mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
+    <div class="mdl-layout__drawer  mdl-color--blue">
+        <div class="userMenu">
+            <button id="username" class="userMenu-button mdl-button mdl-js-button mdl-js-ripple-effect"></button>
+            <button id="kidRegister" class="userMenu-button mdl-button mdl-js-button mdl-button--primary"
+                    onclick="displayKidRegisterWindow()">Register Kid
+            </button>
+            <button id="pendingRequests" class="userMenu-button mdl-button mdl-js-button mdl-button--primary"
+                    onclick="displayKidRegisterWindow()">View Pending Requests
+            </button>
+            <br/>
+
+        </div>
+        <br/>
+
+        <div id="kidCards">
+            <div id="kid-card-holder">
+
+            </div>
+        </div>
+
+        <footer class="mdl-mini-footer">
+            <div class="mdl-mini-footer__left-section">
+                <a class="logout-button mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+                    Logout <i class="material-icons">exit_to_app</i></a>
+            </div>
+        </footer>
+    </div>
+    <main class="mdl-layout__content">
+        <div class="page-content">
+            <div id="map" style="height: 100%;width: 100%;">
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="testButtons">
+
+    <div class="kid-card mdl-shadow--8dp">
+        <form>
+            <input type="button" onclick="displayNotification('management','vladut','sorana','')" value="Management">
+            <br/>
+            <input type="button" onclick="displayNotification('view','vladut','sorana','')" value="View">
+            <input type="button" value="Le Cock">
+            <input type="button" onclick="displayNotification('alert','vladut','sorana',' - Accident near this child')"
+                   value="Alert">
+        </form>
+    </div>
+</div>
+
+<div id="notification-area">
+    <div id="notification-holder">
+
+
+    </div>
+</div>
+
+<div id="registrationArea">
+    <div id="registerWindow" class="mdl-shadow--16dp">
+        <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"
+                style="position: absolute; right: 5px; top: 5px;" onclick="closeKidRegisterWindow()"><i
+                class="material-icons">close</i></button>
+        <h3><span style="color:dodgerblue;position: relative;left: 135px">Register a child</span></h3>
+        <div style="position:absolute; top: 90px;left: 115px;height: 280px;width:270px;background-color:ghostsmoke;"
+             class="mdl-shadow--2dp"></div>
+        <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="usernameField" required>
+                <label class="mdl-textfield__label" for="usernameField">Username</label>
+            </div>
+        </div>
+        <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="password" id="passwordField" required>
+                <label class="mdl-textfield__label" for="passwordField">Password</label>
+            </div>
+        </div>
+        <div style="width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="firstNameField" required>
+                <label class="mdl-textfield__label" for="firstNameField">First Name</label>
+            </div>
+        </div>
+        <div style="width: 120px;height: 50px;position: absolute;top:188px;right: 125px;">
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                <input class="mdl-textfield__input" type="text" id="lastNameField" required>
+                <label class="mdl-textfield__label" for="lastNameField">Last Name</label>
+            </div>
+        </div>
+
+
+        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary"
+                style="width:150px;height:50px;position: absolute; top: 300px;left:175px;"
+                onclick="sendInput();closeKidRegisterWindow()">Register
+        </button>
+    </div>
+</div>
+
+<div class="search-bar">
+    <div id="searchBar" class="mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-color-indigo">
+        <label class="mdl-button mdl-js-button mdl-button--icon" for="sample6">
+            <i class="material-icons">search</i>
+        </label>
+        <div class="mdl-textfield__expandable-holder">
+            <input class="mdl-textfield__input" type="text" id="sample6">
+            <label class="mdl-textfield__label" for="sample6">Expandable Input</label>
+        </div>
+    </div>
+</div>
+
+</body>
+
+</html>

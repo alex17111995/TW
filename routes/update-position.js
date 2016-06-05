@@ -17,24 +17,27 @@ router.get('/', verifyAlreadyLogged, function (req, res, next) {
     res.render('login', {title: 'update-position'});
 });
 
-router.post('/', verifyAlreadyLogged, function (req, res, next){
+router.post('/', verifyAlreadyLogged, function (req, res, next) {
 
     //TODO used the same layout as for login whole function has to be rewritten
 
-    var latitude= parseFloat(req.body.username);
-    var longitude= parseFloat(req.body.password);
-    var object=undefined;
-    if(req.session.type=="kid")
-        object= new child_model();
+    var latitude = parseFloat(req.body.username);
+    var longitude = parseFloat(req.body.password);
+    var object = undefined;
+    if (req.session.type == "kid")
+        object = new child_model();
     else
-        object=new parent_model();
+        object = new parent_model();
 
-    object.updateLocation(req.session.id_user,{'latitude':latitude,'longitude':longitude}).then(function(resp){
-        res.send(resp);
-    })
-    .catch(function(err){
-        res.send(err.message);
-    })
+    object.updateLocation(req.session.id_user, {
+        'latitude': latitude,
+        'longitude': longitude
+    }, req.session.timeoutID).then(function (resp) {
+            res.send(resp);
+        })
+        .catch(function (err) {
+            res.send(err.message);
+        })
 
 
 });

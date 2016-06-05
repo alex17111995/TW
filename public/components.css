@@ -1,21 +1,34 @@
-.notification-card-test.mdl-card {
-    width: 350px;
-    right: 10px;
-    top: 15px;
-    bottom: 15px;
+.management-notification-card {
+    margin-left: 10px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    background-color: whitesmoke;
+}
+
+.viewing-notification-card {
+    margin-left: 10px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    background-color: whitesmoke;
+}
+
+.alert-notification-card {
+    margin-left: 10px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    background-color: white;
 }
 
 .management-notification-card > .mdl-card__title {
     color: #000;
     height: 80px;
-    background: url('management_icon.png') center/cover;
+    background: url('./management_icon.png') center/cover;
 }
 
 .viewing-notification-card > .mdl-card__title {
     color: #000;
-
     height: 80px;
-    background: url('view_icon.png') center/cover;
+    background: url('./view_icon.png') center/cover;
 }
 
 .alert-notification-card > .mdl-card__title {
@@ -29,9 +42,128 @@
     color: #fff
 }
 
-.mdl-textfield {
-    background-color: #448aff;
-    border-bottom-left-radius: 25px;
+.mdl-layout__drawer {
+    height: 100%;
+    border: 0px;
+    overflow: hidden;
+}
 
-   
+#searchBar {
+    background-color: #2196f3;
+    border-bottom-left-radius: 25px;
+}
+
+.mdl-mini-footer {
+    margin: auto;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.logout-button {
+    left: 35%;
+}
+
+.interface-area {
+    overflow: hidden;
+}
+
+.kid-card {
+    width: 220px;
+    height: 46px;
+    align-self: center;
+    background-color: whitesmoke;
+    overflow: hidden;
+    transition-delay: height 1s;
+    margin-bottom: 20px;
+}
+
+.kid-card:hover {
+    height: auto;
+}
+
+.kid-button {
+    width: 180px;
+}
+
+#kid-card-holder {
+    height: inherit;
+    width: 250px;
+    align-self: center;
+    overflow: scroll;
+    padding-left: 10px;
+    padding-right: 17px;
+}
+
+.kid-card-top {
+    width: 220px;
+    height: auto;
+    margin-top: 5px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.kid-card > .mdl-card__title {
+    height: 50px;
+}
+
+.title-card {
+    width: auto;
+    height: 50px;
+    align-self: auto;
+}
+
+.testButtons {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 6;
+}
+
+.dt-button {
+    width: 205px;
+}
+
+.st-button {
+    width: 120px;
+}
+
+#kidCards {
+    position: absolute;
+    height: inherit;
+    width: 235px;
+    overflow: hidden;
+}
+
+.userMenu {
+    width: 240px;
+    height: 45px;
+    align-self: center;
+    background-color: whitesmoke;
+    overflow: hidden;
+    transition-delay: height 1s;
+    margin-bottom: 20px;
+}
+
+.userMenu:hover {
+    height: auto;
+}
+
+.userMenu-button {
+    height: 45px;
+    width: 230px;
+    margin: 5px;
+}
+
+#registerWindow{
+    height: 400px;
+    width: 500px;
+    position:absolute;
+    left: 50%;
+    top: 50%;
+    margin: -250px 0 0 -200px;
+    background-color: whitesmoke;
+    z-index: 0;
 }
