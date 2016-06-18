@@ -5,7 +5,7 @@
     background-color: whitesmoke;
 }
 
-.viewing-notification-card {
+.new-kid-notification-card {
     margin-left: 10px;
     margin-bottom: 10px;
     margin-top: 10px;
@@ -25,10 +25,10 @@
     background: url('./management_icon.png') center/cover;
 }
 
-.viewing-notification-card > .mdl-card__title {
+.new-kid-notification-card > .mdl-card__title {
     color: #000;
     height: 80px;
-    background: url('./view_icon.png') center/cover;
+    background: url('./new_kid_icon.png') center/cover;
 }
 
 .alert-notification-card > .mdl-card__title {
@@ -62,7 +62,16 @@
 }
 
 .logout-button {
-    left: 35%;
+    margin-left: 15px;
+}
+
+.mdl-menu__item{
+    height:35px;
+    line-height: 35px;
+}
+
+.help-button {
+    left: 25px;
 }
 
 .interface-area {
@@ -91,9 +100,11 @@
     height: inherit;
     width: 250px;
     align-self: center;
-    overflow: scroll;
+    overflow-y: scroll;
+    
     padding-left: 10px;
     padding-right: 17px;
+    
 }
 
 .kid-card-top {
@@ -117,8 +128,8 @@
 
 .testButtons {
     position: absolute;
-    left: 50%;
-    top: 50%;
+    left: 10px;
+    top: 75%;
     z-index: 6;
 }
 
@@ -135,6 +146,8 @@
     height: inherit;
     width: 235px;
     overflow: hidden;
+    
+
 }
 
 .userMenu {
@@ -157,13 +170,82 @@
     margin: 5px;
 }
 
-#registerWindow{
+#registerWindow {
     height: 400px;
     width: 500px;
-    position:absolute;
+    position: absolute;
     left: 50%;
     top: 50%;
-    margin: -250px 0 0 -200px;
-    background-color: whitesmoke;
+    margin: -200px 0 0 -250px;
+    background-color: dodgerblue;
     z-index: 0;
+    border-radius: 5px;
+}
+
+#loginWindow {
+    height: 400px;
+    width: 500px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -200px 0 0 -250px;
+    background-color: dodgerblue;
+    z-index: 10;
+    border-radius: 5px;
+}
+
+#modeSelectorWindow {
+    height: 400px;
+    width: 500px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin: -200px 0 0 -250px;
+    background-color: dodgerblue;
+    z-index: 10;
+    border-radius: 5px;
+}
+
+#nearbyKidsWindow {
+    position: absolute;
+    top: 45px;
+    left: 15px;
+    height: auto;
+    width: 50%;
+    background-color: whitesmoke;
+    z-index: 10;
+}
+
+.mdl-cell {
+    box-sizing: border-box;
+    background-color: dodgerblue;
+    height: 200px;
+    padding-left: 0px;
+    padding-top: 0px;
+    color: black;
+}
+
+.mdl-grid:first-of-type .mdl-cell {
+    height: 80px;
+    width: 150px;
+}
+
+.nearby-kid-button {
+    height: 80px;
+    width: 150px;
+}
+
+#newKidHelp {
+    width: auto;
+    height: auto;
+    position: absolute;
+    left: 240px;
+    top: 20%;
+    background-color: dodgerblue;
+    z-index: 10;
+    padding-top: 15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    visibility: hidden;
 }

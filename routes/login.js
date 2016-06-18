@@ -25,7 +25,7 @@ router.post('/', verifyAlreadyLogged, function (req, res, next) {
     if (req.body.isChild == 'on') {
         type = 'kid';
     }
-    authenticate(type, req.body.username, req.body.password).then(function (id) {
+    authenticate.authenticateUser(type, req.body.username, req.body.password).then(function (id) {
         req.session.id_user = id;
         req.session.type = type;
         req.session.isLogged = true;
@@ -52,12 +52,13 @@ router.post('/', verifyAlreadyLogged, function (req, res, next) {
 
 
 router.get('/register', verifyAlreadyLogged, function (req, res, next) {
-    res.render('login', {title: 'Register'});
+    res.render('register', {title: 'Register'});
 });
 router.post('/register', verifyAlreadyLogged, function (req, res, next) {
-    register(req.body.username, req.body.password).then(function () {
-        res.send('OK');
-    }).catch(function (err) {
+    register(req.body.username, req.body.password, req.body.email, req.body.first_name, req.body.last_name)
+        .then(function () {
+            res.send('OK');
+        }).catch(function (err) {
         res.send(err.message);
     });
 });

@@ -11,24 +11,41 @@ var notifications_parameters = require('../notifications_parameters');
 var oracleConn = require('../oracleconnect');
 var oracledb = require('oracledb');
 var jsonFormats = require('../jsonFormats');
+var notifierFunctions = require('../notifier_functions');
 var child_handler = function () {
     return this;
 };
+var validations = require('./validations');
+var geoFancing = require('./geo_fencing');
+var mapTimeouts = new Map();
+var clearTimeoutId = function (kid) {
+    if (mapTimeouts.get(kid) != undefined) {
+        clearTimeout(mapTimeouts.get(kid));
+        mapTimeouts.delete(kid);
+    }
+};
+const OUTSIDE_EMIT = 2;
+const INSIDE_EMIT = 1;
+
+var setTimeoutId = function (kid, timeout) {
+    mapTimeouts.set(kid, timeout);
+};
+
 
 //TODO REMAKE THIS
-var publish_new_location_on_tracked_children_pubsub = function (pid, latitude, longitude, isOnline, timestamp) {
+
+var publish_new_location_on_tracked_children_pubsub = function (pid, latitude, longitude, timestamp) {
     oracleConn.executeSQL('select kid from child_handlers where pid=:pid and is_dynamic_target is not null', {
         pid: pid
     }).then(function (results) {
             for (var i = 0; i < results.rows.length; ++i) {
                 var notifier = PubSubFactory(channels.getChildChannelName(), results.rows[i]);
                 notifier.publish({
-                    channel: 'update_dynamic_target_location',
+                    channel: 'new_dynamic_target_location',
                     data: {
                         pid: pid,
                         latitude: latitude,
                         longitude: longitude,
-                        is_online: isOnline,
                         timestamp_last_update: timestamp
                     }
                 });
@@ -39,6 +56,92 @@ var publish_new_location_on_tracked_children_pubsub = function (pid, latitude, l
         });
 };
 
+var children_of_dynamic_target = function (pid) {
+    return new promise(function (resolve, reject) {
+        oracleConn.executeSQL('select kid from child_handlers where pid=:pid and is_dynamic_target=1', {pid: pid})
+            .then(function (results) {
+                resolve(results.rows.map(function (row) {
+                    return row[0];
+                }));
+
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+    });
+};
+
+var update_location = function (pid, latitude, longitude) {
+    return new promise(function (resolve, reject) {
+        oracleConn.executeSQL('BEGIN update_location_parent(:pid,:latitude,' +
+            ':longitude,:timestamp_out,:array_children); END;', {
+            pid: pid,
+            latitude: latitude,
+            longitude: longitude,
+            timestamp_out: {
+                type: oracledb.STRING, dir: oracledb.BIND_OUT
+            },
+            array_children: {
+                type: oracledb.NUMBER, dir: oracledb.BIND_OUT, maxArraySize: 1000
+            }
+
+        }).then(function (results) {
+                var array_children = results.outBinds.array_children;
+
+                for (var i = 0; i < array_children.length; ++i) {
+                    var notifierKid = PubSubFactory(channels.getChildChannelName(), array_children[i]);
+                    notifierKid.publish({
+                        channel: 'dynamic_target_new_location',
+                        'data': {
+                            kid: array_children[i],
+                            pid: pid,
+                            latitude: latitude,
+                            longitude: longitude,
+                            timestamp: results.outBinds.timestamp_out
+                        }
+                    });
+                    geoFancing(array_children[i]);
+                }
+
+
+                resolve(true);
+
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+    });
+};
+
+
+var onOffline = function (pid) {
+    // clearTimeoutId(kid);
+    mapTimeouts.delete(pid);
+    children_of_dynamic_target(pid).then(function (children) {
+            for (var i = 0; i < children.length; ++i) {
+                var notifier = PubSubFactory(channels.getChildChannelName(), children[i]);
+                notifier.publish({
+                    channel: 'offline_dynamic_target',
+                    data: {
+                        'kid': children[i],
+                        'pid': pid
+                    }
+                })
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+
+    // var notifier = PubSubFactory(channels.getChildChannelName(), kid);
+    /* notifier.publish({
+     channel: 'offline_child',
+     data: {
+     'kid': kid
+     }
+     });
+     */
+};
 
 var get_notifications_of_children = function (subscribed_children) {
     return new promise(function (resolve, reject) {
@@ -144,10 +247,35 @@ var get_children_of_handler = function (pid) {
     });
 
 };
+
+child_handler.prototype.isOnline = function (pid) {
+    return mapTimeouts.get(pid) != undefined;
+};
+child_handler.prototype.get_email_of_username = function (username) {
+    return new promise(function (resolve, reject) {
+        oracleConn.executeSQL('SELECT email from parents where username=:username and type=0',
+            {
+                username: username
+            })
+            .then(function (results) {
+                if (results.rows.length === 0) {
+                    reject(new Error('invalid username'));
+                    return;
+                }
+                resolve(results.rows[0][0]);
+
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+    });
+
+};
+
 child_handler.prototype.register_kid = function (pid, information) {
     return new promise(function (resolve, reject) {
 
-        oracleConn.executeSQL('BEGIN pack_auth.register_child(:pid,:username,:password,:first_name,:last_name,:kid',
+        oracleConn.executeSQL('BEGIN pack_auth.register_child(:pid,:username,:password,:first_name,:last_name,:kid);END;',
             {
                 pid: pid,
                 username: information['username'],
@@ -159,7 +287,7 @@ child_handler.prototype.register_kid = function (pid, information) {
             })
             .then(function (result) {
                 resolve('OK');
-                var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_to_add);
+                var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid);
                 notifierParent.publish({
                         'channel': 'new_child',
                         'kid': result.outBinds.kid
@@ -176,11 +304,10 @@ child_handler.prototype.register_kid = function (pid, information) {
 };
 
 
-child_handler.prototype.search_parents=function(pid,kid,pattern){
+child_handler.prototype.search_parents = function (pid, kid, pattern) {
 
 
 };
-
 
 
 child_handler.prototype.kids_nearby = function (pid, kid) {
@@ -232,26 +359,25 @@ child_handler.prototype.kids_nearby = function (pid, kid) {
 
 
 child_handler.prototype.updateLocation = function (pid, information) {
-    //TODO UPDATE DB
+
     return new promise(function (resolve, reject) {
 
-        oracleConn.executeSQL('BEGIN update_location_parent(:pid,:latitude,:longitude,1,:timestamp_out); END;', {
-            pid: pid,
-            latitude: information['latitude'],
-            longitude: information['longitude'],
-            timestamp_out: {type: oracledb.STRING, dir: oracledb.BIND_OUT}
-        }).then(function (results) {
-                publish_new_location_on_tracked_children_pubsub(pid, information['latitude'],
-                    information['longitude'], 1, results.outBinds.timestamp_out);
+        update_location(pid, information['latitude'], information['longitude'], 1)
+            .then(function (results) {
+                clearTimeoutId(pid);
+                var timeoutID = setTimeout(function () {
+                    onOffline(pid)
+                }, 1000 * 60 * 1/4);
+                setTimeoutId(pid, timeoutID);
                 resolve(true);
-
             })
             .catch(function (error) {
                 console.log(error.message);
                 reject(error);
             });
-    });
 
+
+    });
 };
 
 var username_and_name_user_of_parent = function (connection, pid) {
@@ -271,23 +397,7 @@ var username_and_name_user_of_parent = function (connection, pid) {
             });
     });
 };
-var username_and_name_user_of_child = function (connection, kid) {
-    return new promise(function (resolve, reject) {
-        connection.execute('select username,firstname,lastname from parents where kid=:kid', {
 
-                kid: kid
-            }
-        ).then(function (results) {
-                if (results.rows.length == 0)
-                    throw error;
-                else resolve(results.rows[0]);
-
-            })
-            .catch(function (error) {
-                throw error;
-            });
-    });
-};
 
 var verify_rights = function (connection, pid, kid) {
     return new promise(function (resolve, reject) {
@@ -366,57 +476,71 @@ child_handler.prototype.no_longer_dynamic_target = function (pid_with_kid_acces,
 
                 });
             });
+        geoFancing(kid);
     });
 
 };
 
 
 child_handler.prototype.make_parent_dynamic_target = function (pid_with_kid_access, kid, radius) {
+    var thisInstance = this;
     return new promise(function (resolve, reject) {
-        oracleConn.getConnection().then(function (connection) {
-            connection.execute('UPDATE child_handlers set is_dynamic_target =1,radius_dynamic_target=:radius where kid=:kid and pid=:pid',
-                {
-                    pid: pid_with_kid_access,
-                    kid: pid_with_kid_access
-                }).then(function (results) {
-                if (results.rowsAffected == 0) {
-                    reject(new Error('no permission'));
-                }
-                connection.execute('SELECT latitude,longitude,is_online,last_timestamp_update where pid=:pid',
+        if (!validations.validate_new_dynamic(pid_with_kid_access, kid, radius)) {
+            reject(new Error('invalid parameters'));
+            return;
+        }
+        oracleConn.getConnection()
+            .then(function (connection) {
+                connection.execute('UPDATE child_handlers set is_dynamic_target =1,radius_dynamic_target=:radius where kid=:kid and pid=:pid',
                     {
-                        pid: pid_with_kid_access
-                    }).then(function (results) {
-                    oracleConn.commit_and_close(connection).then(function () {
-                        var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
-                        notifierKid.publish({
-                            channel: 'new_dynamic_target',
-                            data: {
-                                kid: kid,
-                                pid: pid_with_kid_access,
-                                latitude: results.rows[0][0],
-                                longitude: results.rows[0][1],
-                                is_online: results.rows[0][2],
-                                last_timestamp: results.rows[0][3],
-                                radius: radius
-                            }
+                        pid: pid_with_kid_access,
+                        kid: kid,
+                        radius: radius
+                    })
+                    .then(function (results) {
+                        if (results.rowsAffected == 0) {
+                            throw new Error('no permission');
+                        }
+                        return oracleConn.execute_query_connection(connection, 'SELECT latitude,longitude,last_timestamp_update from parents_location where pid=:pid',
+                            {
+                                pid: pid_with_kid_access
+                            });
+                    })
+                    .then(function (results) {
+                        oracleConn.commit_and_close(connection).then(function () {
+                                var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
+                                notifierKid.publish({
+                                    channel: 'new_dynamic_target',
+                                    data: {
+                                        kid: kid,
+                                        pid: pid_with_kid_access,
+                                        latitude: results.rows[0][0],
+                                        longitude: results.rows[0][1],
+                                        is_online: thisInstance.isOnline(pid_with_kid_access),
+                                        timestamp_last_update: results.rows[0][3],
+                                        radius: radius
+                                    }
+                                });
+                                geoFancing(kid);
+                                resolve(true);
+                            })
+                            .catch(reject(new Error('error commiting')));
+
+
+                    })
+                    .catch(function (error) {
+                        oracleConn.rollback_and_close(connection).then(function () {
+                            reject(error);
                         });
-                        resolve(true);
                     });
 
-                });
-
             }).catch(function (error) {
-                oracleConn.rollback_and_close(connection).then(function () {
-                    reject(error);
-                });
-            });
-
-        }).catch(function (error) {
             reject(error);
         });
 
     });
-};
+}
+;
 
 child_handler.prototype.add_parent_to_child = function (pid_parent_granting_access, pid_to_add, kid) {
     return new promise(function (resolve, reject) {
@@ -479,64 +603,22 @@ child_handler.prototype.add_parent_to_child = function (pid_parent_granting_acce
     });
 };
 
-/*
 
- child_handler.prototype.request_kid_access = function (pid_sender, requested_kid, permission_required) {
- return new promise(function (resolve, reject) {
- if (permission_required < 0 || permission_required > 1) {
- reject(new Error('wrong permission'));
- }
- oracledb.getConnection().then(function (connection) {
- connection.execute('insert into child_handlers values(:kid,:pid,:permission',
- {
- kid: requested_kid,
- pid: pid_sender,
- permission: permission_required
- }).then(function () {
+var publish_alert_if_necessary = function (kid, geo_fencing) {
+    var notifier = PubSubFactory(channels.getChildChannelName(), kid);
+    if (geo_fencing != 0) {
+        notifierFunctions.emit_geo_alert(kid, geo_fencing);
+    }
+};
 
- var promiseChildInfo = username_and_name_user_of_child(connection, requested_kid);
- var promiseParentInfo = username_and_name_user_of_parent(connection, pid_sender);
- promise.all([promiseChildInfo, promiseParentInfo]).then(function (values) {
- oracleConn.commit_and_close(connection).then(function () {
 
- var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_sender);
- var notifierKid = PubSubFactory(channels.getChildChannelName(), requested_kid);
- notifierKid.publish({
- channel: 'parent_added',
- data: {
- kid: requested_kid,
- pid: pid_sender,
- username: values[1][0],
- first_name: values[1][1],
- last_name: values[1][2]
- }
- });
- notifierParent.publish({
- channel: 'kid_request',
- data: {
- kid: requested_kid,
- username: values[0][0],
- first_name: values[0][1],
- last_name: values[0][2]
- }
- });
- });
- });
-
- });
- }).catch(function (error) {
- oracleConn.rollback_and_close(connection);
- reject(error);
- });
-
- }).catch(function (error) {
- reject(error);
- });
- };
- */
 child_handler.prototype.add_static_target = function (pid, kid, longitude, latitude, radius) {
     return new promise(function (resolve, reject) {
         var static_target_id = 0;
+        if (!validations.validate_new_static_target(kid, pid, latitude, longitude, radius)) {
+            reject(new Error('invalid parameters'));
+            return;
+        }
         oracleConn.executeSQL('BEGIN pack_kid_restrictions.add_static_restriction(:pid,:kid,:latitude,:longitude,:radius,:id_static); END;',
             {
                 pid: pid,
@@ -544,11 +626,12 @@ child_handler.prototype.add_static_target = function (pid, kid, longitude, latit
                 latitude: latitude,
                 longitude: longitude,
                 radius: radius,
-                id_static: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT}
+                id_static: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT},
             })
             .then(function (results) {
                 static_target_id = results.outBinds.id_static;
                 var notifier = PubSubFactory(channels.getChildChannelName(), kid);
+
                 notifier.publish({
                     channel: 'new_static_target',
                     data: {
@@ -557,14 +640,14 @@ child_handler.prototype.add_static_target = function (pid, kid, longitude, latit
                         'longitude': longitude,
                         'radius': radius,
                         'static_target_id': static_target_id
-
-
                     }
                 });
+                geoFancing(kid);
                 resolve({
                     'kid': kid,
                     'latitude': latitude,
-                    'longitude': longitude
+                    'longitude': longitude,
+                    'changed_geo': changed_geo
                 });
 
             }).catch(function (error) {
@@ -575,13 +658,19 @@ child_handler.prototype.add_static_target = function (pid, kid, longitude, latit
 
 
 child_handler.prototype.delete_static_target = function (pid, static_id) {
+
     return new promise(function (resolve, reject) {
+        if (!validations.validate_delete_static_target(static_id, pid)) {
+            reject(new Error('invalid parameters'));
+            return;
+        }
         oracleConn.executeSQL('BEGIN pack_kid_restrictions.delete_static_restriction(:pid,:static_id,:kid) ;END;', {
             pid: pid,
             static_id: static_id,
-            kid: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT}
+            kid: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT},
 
         }).then(function (results) {
+
                 var notifier = PubSubFactory(channels.getChildChannelName(), results.outBinds.kid);
                 notifier.publish({
                     channel: 'deleted_static_target',
@@ -590,6 +679,7 @@ child_handler.prototype.delete_static_target = function (pid, static_id) {
                         kid: results.outBinds.kid
                     }
                 });
+                geoFancing(kid);
                 resolve({
                     static_id: static_id,
                     kid: results.outBinds.kid

@@ -8,12 +8,18 @@ var channels = require('../channels');
 var oracleconnect = require('../oracleconnect');
 var oracledb = require('oracledb');
 var mapTimeouts = new Map();
+var geoFancing = require('./geo_fencing');
+var validations = require('./validations');
+
 
 var clearTimeoutId = function (kid) {
     if (mapTimeouts.get(kid) != undefined) {
         clearTimeout(mapTimeouts.get(kid));
         mapTimeouts.delete(kid);
     }
+};
+var isOnline = function (kid) {
+    return mapTimeouts.get(kid) != undefined;
 };
 
 var setTimeoutId = function (kid, timeout) {
@@ -24,84 +30,68 @@ var setTimeoutId = function (kid, timeout) {
 var kidModel = function () {
 };
 
-const IGNORE_PARAMETER = -2;
 
-const TIMER_OFFLINE = 10000;
-
-
-var isInPermittedLocation = function (object_location, targets) { //PRIVATE FUNCTION NOT IN PROTOTYPE
-    var kid_longitude = object_location.longitude;
-    var kid_latitude = object_location.latitude;
-    var earthRadius = 6371000;
-    for (var i = 0; i < targets.length; i++) {
-        var target_latitude = targets[i].latitude;
-        var target_longitude = targets[i].longitude;
-        var radiansLat = (kid_latitude - target_latitude) * (Math.PI / 180);
-        var radiansLong = (kid_longitude - target_longitude) * (Math.PI / 180);
-        var a = Math.sin(radiansLat / 2) * Math.sin(radiansLat / 2) + Math.cos(kid_latitude * (Math.PI / 180)) * Math.cos(target_latitude * Math.PI / 180) * Math.sin(radiansLong) * Math.sin(radiansLong);
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        var dist = earthRadius * c;
-        if (dist < targets[i].radius)
-            return true;
-    }
-    return false;
-};
-
-
-var timeoutVALUE = 30000;
-
-
-kidModel.prototype.updateLocation = function (kid, information) {
+var timeoutVALUE = 1000 * 60 * 1/4;
+var update_location = function (kid, latitude, longitude) {
     return new promise(function (resolve, reject) {
-        oracleconnect.executeSQL('BEGIN update_location_child(:kid,:latitude,:longitude,1,:timestamp_out); END;', {
+        oracleconnect.executeSQL('BEGIN update_location_child(:kid,:latitude,:longitude,:timestamp_out); END;', {
             kid: kid,
-            latitude: information['latitude'],
-            longitude: information['longitude'],
+            latitude: latitude,
+            longitude: longitude,
             timestamp_out: {
                 type: oracledb.STRING, dir: oracledb.BIND_OUT
             }
+
         }).then(function (results) {
-                clearTimeoutId(kid);
-                var  timeoutID = setTimeout(function () {
-                    onOffline(kid, information['latitude'], information['longitude'])
-                },5000);
-                setTimeoutId(kid, timeoutID);
-
-
                 var notifier = PubSubFactory(channels.getChildChannelName(), kid);
                 notifier.publish({
                     channel: 'new_child_location',
                     data: {
                         'kid': kid,
-                        'latitude': information['latitude'],
-                        'longitude': information['longitude'],
-                        'is_online': 1,
+                        'latitude': latitude,
+                        'longitude': longitude,
                         'timestamp': results.outBinds.timestamp_out
                     }
                 });
-
-                resolve({
-                    'latitude': information['latitude'],
-                    'longitude': information['longitude'],
-                    'is_online': 1,
-                    'timestamp': results.outBinds.timestamp_out
-                });
-
+                resolve(true);
+                geoFancing(kid);
 
             })
             .catch(function (error) {
                 reject(error);
+
             });
-
-
     });
+};
 
+
+kidModel.prototype.updateLocation = function (kid, information) {
+
+    return new promise(function (resolve, reject) {
+        if (!validations.validate_update_location(kid, information)) {
+            reject(new Error('invalid parameters'));
+            return;
+        }
+
+        update_location(kid, information['latitude'], information['longitude'], 1)
+            .then(function (results) {
+                clearTimeoutId(kid);
+                var timeoutID = setTimeout(function () {
+                    onOffline(kid, information['latitude'], information['longitude'])
+                }, timeoutVALUE);
+                resolve(true);
+                setTimeoutId(kid, timeoutID);
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+    });
 };
 
 
 kidModel.prototype.get_child_location = function (kid) {
     return new promise(function (resolve, reject) {
-        oracleconnect.executeSQL('SELECT longitude,latitude,is_online from children_location where kid=:kid', {
+        oracleconnect.executeSQL('SELECT longitude,latitude from children_location where kid=:kid', {
             'kid': kid
         }).then(function (results) {
             if (results.rows.length == 0) {
@@ -111,7 +101,7 @@ kidModel.prototype.get_child_location = function (kid) {
             resolve({
                 longitude: results.rows[0][0],
                 latitude: results.rows[0][1],
-                is_online: results.rows[0][2]
+                is_online: isOnline(kid)
             });
         }).catch(function (error) {
             reject(error);
@@ -123,7 +113,7 @@ kidModel.prototype.get_child_location = function (kid) {
 kidModel.prototype.locationOfUserAndCredentials = function (connection, kid) {
     return new promise(function (resolve, reject) {
         connection.execute('select c.username,c.firstname,c.lastname,' +
-                'l.longitude,l.latitude,l.is_online from children' +
+                'l.longitude,l.latitude from children' +
                 ' c left outer join children_location l on c.kid=l.kid where c.kid=:kid', {kid: kid})
             .then(function (results) {
                 if (results.rows == 0) {
@@ -136,9 +126,9 @@ kidModel.prototype.locationOfUserAndCredentials = function (connection, kid) {
                     username: first_row[0],
                     first_name: first_row[1],
                     last_name: first_row[2],
-                    latitude: first_row[3],
-                    longitude: first_row[4],
-                    is_online: first_row[5]
+                    latitude: first_row[4],
+                    longitude: first_row[3],
+                    is_online: isOnline(kid)
                 });
 
             }).catch(function (error) {
@@ -149,32 +139,14 @@ kidModel.prototype.locationOfUserAndCredentials = function (connection, kid) {
 };
 
 var onOffline = function (kid, latitude, longitude) {
-   // clearTimeoutId(kid);
-    oracleconnect.executeSQL('BEGIN update_location_child(:kid,:latitude,:longitude,0,:timestamp_out); END;', {
-        kid: kid,
-        latitude: latitude,
-        longitude: longitude,
-        timestamp_out: {
-            type: oracledb.STRING, dir: oracledb.BIND_OUT
+    mapTimeouts.delete(kid);
+    var notifier = PubSubFactory(channels.getChildChannelName(), kid);
+    notifier.publish({
+        channel: 'offline_child',
+        data: {
+            'kid': kid
         }
-    }).then(function (results) {
-        console.log('DAP');
-            var notifier = PubSubFactory(channels.getChildChannelName(), kid);
-            notifier.publish({
-                channel: 'new_child_location',
-                data: {
-                    'kid': kid,
-                    'latitude': latitude,
-                    'longitude': longitude,
-                    'is_online': 0,
-                    'timestamp': results.outBinds.timestamp_out
-                }
-            });
-        }
-        )
-        .catch(function (error) {
-            console.log(error.message);
-        });
+    });
 };
 
 kidModel.prototype.static_targets_of_child = function (connection, kid) {
@@ -237,21 +209,23 @@ kidModel.prototype.get_handlers_of_child_and_access_request = function (connecti
 kidModel.prototype.get_dynamic_targets = function (connection, kid) {
     return new promise(function (resolve, reject) {
         connection.execute('select c.pid,c.radius_dynamic_target' +
-            ',p.latitude,p.longitude,p.is_online,p.last_timestamp_update from parents_location p right outer join child_handlers c on p.pid=c.pid where is_dynamic_target' +
+            ',p.latitude,p.longitude,p.last_timestamp_update from parents_location p right outer join child_handlers c on p.pid=c.pid where is_dynamic_target' +
             ' is not null and kid=:kid',
             {
                 kid: kid
             }).then(function (results) {
+                var parentModel = require('./child_handler');
+                var parent = new parentModel();
                 var array = [];
                 for (var i = 0; i < results.rows.length; ++i) {
                     var obj = {
                         pid: results.rows[i][0],
-                        radius_dynamic_target: results.rows[i][1],
+                        radius: results.rows[i][1],
                         latitude: results.rows[i][2],
                         longitude: results.rows[i][3],
-                        is_online: results.rows[i][4],
+                        is_online: parent.isOnline(results.rows[i][0]),
                         last_timestamp_update: results.rows[i][5]
-                    }
+                    };
                     array.push(obj);
                 }
                 resolve(array);
@@ -286,12 +260,6 @@ kidModel.prototype.get_notifications = function (kid) {//
 
         }.bind(this));
     }.bind(this));
-
-};
-
-
-kidModel.prototype.hasGoneOffline = function () {
-
 
 };
 

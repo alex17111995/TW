@@ -133,10 +133,12 @@ var poller_listener = function (channelToPublish, kid) {
 poller_listener.prototype.close = function () {
     if (this.intervalID != undefined) {
         clearInterval(this.intervalID);
-        this.channel_to_subscribe = undefined;
     }
-
+        this.channel_to_subscribe.unsubscribe(this.handler);
+        this.handler=undefined;
+        this.channel_to_subscribe = undefined;
 };
+
 
 module.exports = poller_listener;
 

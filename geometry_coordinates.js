@@ -76,5 +76,6 @@ function distancemeasure(lat1, lon1, lat2, lon2){  // generally used geo measure
 
 module.exports = {
     boundingBox: boundingBox,
-    isInPermittedLocation: isInPermittedLocation
+    isInPermittedLocation: isInPermittedLocation,
+    distancemeasure:distancemeasure
 };

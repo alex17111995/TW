@@ -5,16 +5,15 @@
  */
 
 var app_exports = require('../app');
-var app=app_exports.app;
-var socket_controller= require('../socketController');
+var app = app_exports.app;
+var socket_controller = require('../socketController');
 var debug = require('debug')('untitled1:server');
 var oracleDB = require('../oracleconnect');
 var http = require('http');
-var poller_listener= require('../controller/poller_listener');
+var poller_listener = require('../controller/poller_listener');
+var oracledb=require('oracledb');
 
 //poller_listener(0,0);
-
-
 
 
 /**
@@ -29,11 +28,11 @@ app.set('port', port);
  */
 var server = http.createServer(app);
 var sio = require("socket.io")(server);
-sio.use(function(socket, next) {
+sio.use(function (socket, next) {
     app_exports.session_middleware(socket.request, socket.request.res, next);
 });
 
-sio.sockets.on("connection",socket_controller);
+sio.sockets.on("connection", socket_controller);
 
 oracleDB.initializeDB({
     user: "student",
@@ -41,17 +40,8 @@ oracleDB.initializeDB({
     connectString: "192.168.1.69:1521/XE"
 }).then(function (pool) {
     // oracleDB.execute_SQL_leave_connection('select * from blabla').then(function(results))
-        oracleDB.executeSQL('insert into blabla values (1)').then(function (results) {
-            oracleDB.executeSQL('select * from blabla').then(function(results){
-                console.log(results.rows);
-            });
-
-        }).catch(function (error) {
-            console.log(error.message);
-        });
     server.listen(port);
-    });
-
+});
 
 
 server.on('error', onError);

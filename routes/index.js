@@ -1,11 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var pubSub = require('../PubSub')
-var dbconnect = require('../model/dbconnect');
 var promise = require('promise');
-var kid_model = require('../model/kidModel');
 var parent_model = require('../model/child_handler');
-var oracleConn = require('../oracleconnect');
 var jsonFormats = require('../jsonFormats');
 /* GET home page. */
 var oracledb = require('oracledb');
@@ -15,7 +11,7 @@ var verifySession = function (req, res, next) {
         next();
     else
         res.redirect('/login');
-}
+};
 router.get('/stefan', verifySession, function (req, res, next) {
 
 
@@ -46,7 +42,7 @@ router.get('/', verifySession, function (req, res, next) {
         res.send(error.message);
     });
     */
-    res.sendFile(path.join(__dirname,'../public', 'index-1.html'));
+    res.sendFile(path.join(__dirname,'../public', 'index-1-6.html'));
    // res.render('index');
 
 });

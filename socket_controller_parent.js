@@ -26,25 +26,33 @@ var subscribe_channels = function (socket, type_of_user, user_id) {
     return new promise(function (resolve, reject) {
         process.nextTick(function () {
             var on_publish_handler = function (msg) {
-                socket.emit('blabla', msg);
+                socket.emit(msg.channel, msg.data);
             };
             var subscribed_children = [];
             var administrative_handler = function (msg) {
                 if (msg.channel == 'new_child') { //
                     subscribed_children.push(msg.kid);
                     subscribe_child(msg.kid, on_publish_handler);
-                    socket.emit('blabla', msg);
+                    var kid = new kidModel();
+                    kid.get_notifications(msg.kid).then(function (child_structure) {
+
+                            socket.emit('new_child', child_structure);
+                        })
+                        .catch(function (error) {
+                            socket.emit('err', 'Server error occurded, reload page');
+                        });
+
                     //TODO ia vechile evenimente
 
 
                 }
                 else if (msg.channel == 'deleted_child') {
                     subscribed_children = subscribed_children.filter(function (element) {
-                        return element != msg.kid;
+                        return element != msg.data.kid;
                     });
-                    var childChannel = PubSubFactory(channels.getChildChannelName(), msg.kid);
+                    var childChannel = PubSubFactory(channels.getChildChannelName(), msg.data.kid);
                     childChannel.unsubscribe(on_publish_handler);
-                    socket.emit('blabla', msg);
+                    socket.emit('deleted_child', msg.data);
                 }
 
             };
@@ -73,7 +81,7 @@ var subscribe_channels = function (socket, type_of_user, user_id) {
 var on_disconnect_unsubscribe_channels = function (handler, user_id) {
     var parent_administration = PubSubFactory(channels.getParentAdministrativeChannel(), user_id);
     parent_administration.unsubscribe(handler[1]);
-    for (var i = 0; i < handler[2].lenght; i++) {
+    for (var i = 0; i < handler[2].length; i++) {
         unsubscribe_child(handler[2][i], handler[0]);
     }
 
@@ -98,7 +106,7 @@ var socket_controller = function (socket) {
                 on_disconnect_unsubscribe_channels(handlerID, socket.request.session.id_user);
             });
             socket.on('delete_static_target', function (data) {
-                model.delete_static_target(socket.request.session.id_user, data.static_target_id).then(function (result) {
+                model.delete_static_target(socket.request.session.id_user, data).then(function (result) {
 
 
                     })
@@ -119,7 +127,10 @@ var socket_controller = function (socket) {
                 });
 
             });
-            socket.on('new_parent', function (data) {
+            socket.on('make_dynamic', function (data) {
+                model.make_parent_dynamic_target(socket.request.session.id_user,data.kid,data.radius);
+            });
+            socket.on('add_parent', function (data) {
                 model.add_parent_to_child(socket.request.session.id_user, data.pid, data.kid).then(function (resp) {
                     console.log('merge' + resp);
                 }).catch(function (resp) {
@@ -127,17 +138,25 @@ var socket_controller = function (socket) {
                 });
 
             });
+            socket.on('register_kid', function (data) {
+                model.register_kid(socket.request.session.id_user,{
+                    username:data.username,
+                    password:data.password,
+                    first_name:data.first_name,
+                    last_name:data.last_name
+                })
 
+            });
 
             socket.on('add_static_target', function (data) {
-              //  data.radius = Math.floor(data.radius);
+                //  data.radius = Math.floor(data.radius);
                 data.kid = Number.parseInt(data.kid);
                 data.kid = Number.parseInt(data.kid);
-              //  var validated = validate_static_target_input(data);
-               // console.log(validated);
+                //  var validated = validate_static_target_input(data);
+                // console.log(validated);
 
 //                if (!validated)
-  //                  socket.emit('err', 'invalid_data');
+                //                  socket.emit('err', 'invalid_data');
                 model.add_static_target(socket.request.session.id_user, data.kid, data.longitude, data.latitude, data.radius)
                     .then(function (result) {
 
@@ -149,7 +168,9 @@ var socket_controller = function (socket) {
             });
 
             model.get_notifications(socket.request.session.id_user).then(function (initial_events) {
-                socket.emit('initial_object', initial_events);
+                setTimeout(function () {
+                    socket.emit('initial_object', initial_events);
+                }, 1);
                 console.log('merge');
 
             }).catch(function (error) {

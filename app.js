@@ -7,12 +7,17 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var login = require('./routes/login');
+var forgot_password = require('./routes/forgot_password');
+var reset_password=require('./routes/reset-password');
+var generate_kid_code=require('./routes/generate_kid_code');
+var fblogin = require('./routes/facebook-auth');
 var new_target = require('./routes/new_target');
+var logout = require('./routes/sign-out');
 var update_position = require('./routes/update-position');
 var ajax_notification = require('./routes/ajax-get-notification');
 var session = require('express-session');
 var app = express();
-
+var passport = require('passport');
 
 var crypto = require('crypto');
 var bdConnect = require('./model/dbconnect')
@@ -36,6 +41,8 @@ var session_middleware = session({
     saveUninitialized: true
 });
 app.use(session_middleware);
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use('/', routes);
 app.use('/users', users);
@@ -43,6 +50,11 @@ app.use('/login', login);
 app.use('/ajax-get-notification', ajax_notification);
 app.use('/update', update_position);
 app.use('/new_target', new_target);
+app.use('/facebook', fblogin);
+app.use('/logout', logout);
+app.use('/forgot_password', forgot_password);
+app.use('/reset-password',reset_password);
+app.use('/generate-kid-code',generate_kid_code);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -134,6 +134,9 @@ module.exports = {
     commit_and_close: commit_and_close,
     rollback_and_close: rollback_and_close,
     execute_query_connection: function (connection, query, bind,options) {
+        if(options===undefined){
+            options={autoCommit:false};
+        }
         return new promise(function (resolve, reject) {
             connection.execute(query, bind,options).then(function (r) {
                     resolve(r);

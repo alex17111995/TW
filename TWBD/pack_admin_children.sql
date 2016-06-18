@@ -9,9 +9,8 @@ END pack_admin_children;
 
 CREATE OR REPLACE PACKAGE BODY pack_admin_children AS
 	PROCEDURE collect_child_handlers(p_kid child_handlers.kid%TYPE
-		,table_info OUT table_child_handler_info ) IS	
+		,table_info OUT table_child_handler_info ) IS
 	BEGIN
-
 		SELECT child_handler_info(pid,username,firstname,lastName,permission)
 			BULK COLLECT INTO table_info FROM parents natural join child_handlers where kid=p_kid;
 	END;

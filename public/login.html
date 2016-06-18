@@ -2,43 +2,95 @@
 
 <head>
     <script src="http://maps.googleapis.com/maps/api/js"></script>
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.min.js"></script>
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.blue-red.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="components.css">
     <script>
-        var map;
 
-        function loadMap() {
 
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: new google.maps.LatLng(47.165528, 27.560970)
-                , zoom: 13
-                , mapTypeId: google.maps.MapTypeId.ROADMAP
-                , disableDefaultUI: true
-            });
-        }
-        google.maps.event.addDomListener(window, 'load', loadMap);
+       
     </script>
 
 
 
     <title>Kido Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.min.js"></script>
-    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.6/material.blue-red.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="layout.css">
-    <link rel="stylesheet" href="components.css">
+
 
 </head>
 
-<body onload="loadMap()">
-    Testing
-    <div class="centerbox">
-        <div class="centercard">
-            Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>Shit<br/>
+<body background="login-register-bg.jpg">
+    
+    <div id="pageName"> <h2> - Kid Observer</h2></div>
+    
+    <div id="registrationArea" style="z-index:5;visibility:hidden;">
+        <div id="registerWindow" class="mdl-shadow--16dp">
+            <h3><span style="color:dodgerblue;position: relative;top: 15px;left: 110px;z-index:15;">Parent registration</span></h3>
+            <div style="position:absolute; top: 20px;left: 105px;height: 340px;width:290px;background-color:ghostwhite;" class="mdl-shadow--16dp"></div>
+            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="usernameField" required>
+                    <label class="mdl-textfield__label" for="usernameField">Username</label>
+                </div>
+            </div>
+            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="password" id="passwordField" required>
+                    <label class="mdl-textfield__label" for="passwordField">Password</label>
+                </div>
+            </div>
+            <div style="width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="firstNameField" required>
+                    <label class="mdl-textfield__label" for="firstNameField">First Name</label>
+                </div>
+            </div>
+            <div style="width: 120px;height: 50px;position: absolute;top:188px;right: 125px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="lastNameField" required>
+                    <label class="mdl-textfield__label" for="lastNameField">Last Name</label>
+                </div>
+            </div>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="width:150px;height:50px;position: absolute; top: 300px;left:135px;" onclick="sendInput();closeKidRegisterWindow()">Register</button>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" style="width:50px;height:50px;position: absolute; top: 300px;left:300px;" onclick="closeKidRegisterWindow()"><i class="material-icons">close</i></button>
         </div>
-        
-        
     </div>
-
+    
+    
+    <div id="loginArea" style="z-index:0;visibility:hidden;">
+        <div id="loginWindow">
+            <h3><span style="color:dodgerblue;position: relative;top: 15px;left: 200px;z-index:15;">Login</span></h3>
+            <div style="position:absolute; top: 20px;left: 105px;height: 340px;width:290px;background-color:ghostwhite;" class="mdl-shadow--16dp"></div>
+            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="text" id="usernameField">
+                    <label class="mdl-textfield__label" for="usernameField">Username</label>
+                </div>
+            </div>
+            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;top:25px;left: 125px;">
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                    <input class="mdl-textfield__input" type="password" id="passwordField">
+                    <label class="mdl-textfield__label" for="passwordField">Password</label>
+                </div>
+            </div>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" style="width:50px;height:50px;position: absolute; top: 300px;left:125px;" onclick="closeKidRegisterWindow()"><i class="material-icons">keyboard_backspace</i></button>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="width:150px;height:50px;position: absolute; top: 300px;left:225px;" onclick="sendInput();closeKidRegisterWindow()">Login</button>
+        </div>
+    </div>
+    
+    
+    <div id="ModeSelectorArea" style="visibility:visible;">
+        <div id="modeSelectorWindow">
+            <h3><span style="color:dodgerblue;position: relative;top: 15px;left: 210px;z-index:15;">Kido</span></h3>
+            <div style="position:absolute; top: 20px;left: 105px;height: 340px;width:290px;background-color:ghostwhite;" class="mdl-shadow--16dp"></div>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp" style="width:260px;height:80px;font-size:18px;position: relative; left: 120px;top: 30px;">Parent Registration</button><br/>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp" style="width:120px;height:80px;font-size:18px;position: relative; left: 120px;top: 70px;">Parent Login</button>
+            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp" style="width:120px;height:80px;font-size:18px;position: relative; left: 135px;top: 70px;">Child Login</button>
+        </div>
+    </div>
+    
 
 </body>
 

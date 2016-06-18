@@ -15,36 +15,58 @@
             });
         }
         google.maps.event.addDomListener(window, 'load', loadMap);
-        
-                function displayKidRegisterWindow() {
+
+        function displayKidRegisterWindow() {
             var regWindow = document.createElement("e");
             var registrationWindowCode = "<div id=\"registerWindow\" class=\"mdl-shadow--16dp\">";
-                 registrationWindowCode += "<button class=\"mdl-button mdl-js-button mdl-button--icon mdl-button--colored\" style = \"position: absolute; right: 15px; top: 10px;\" onclick = \"closeKidRegisterWindow()\"><i class=\"material-icons\">close</i></button>";
-                 registrationWindowCode += "<h3><span style=\"color:dodgerblue;position: relative;left: 130px\">Register a child</span></h3>";
-                 registrationWindowCode += "<div style=\"width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
-                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
-                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"usernameField\" required>";
-                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"usernameField\">Username</label></div></div>";
-                 registrationWindowCode += "<div style=\"width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
-                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
-                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"passwordField\" required>";
-                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"passwordField\">Password</label></div></div>";
-                 registrationWindowCode += "<div style=\"width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
-                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
-                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"FirstNameField\" required>";
-                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"FirstNameField\">First Name</label></div></div>";
-                 registrationWindowCode += "<div style=\"width: 120px;height: 50px;position: absolute;top:188px;right: 125px;\">";
-                 registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
-                 registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"LastNameField\" required>";
-                 registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"LastNameField\">Last Name</label></div></div>";
-                 registrationWindowCode += " <button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\" style=\"width:150px;height:50px;position: absolute; top: 300px;left:175px;\" onclick=\"sendInput();closeKidRegisterWindow()\">Register</button></div>";
+            registrationWindowCode += "<button class=\"mdl-button mdl-js-button mdl-button--icon mdl-button--colored\" style = \"position: absolute; right: 15px; top: 10px;\" onclick = \"closeKidRegisterWindow()\"><i class=\"material-icons\">close</i></button>";
+            registrationWindowCode += "<h3><span style=\"color:dodgerblue;position: relative;left: 130px\">Register a child</span></h3>";
+            registrationWindowCode += "<div style=\"width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
+            registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+            registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"usernameField\" required>";
+            registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"usernameField\">Username</label></div></div>";
+            registrationWindowCode += "<div style=\"width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
+            registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+            registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"passwordField\" required>";
+            registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"passwordField\">Password</label></div></div>";
+            registrationWindowCode += "<div style=\"width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;\">";
+            registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+            registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"FirstNameField\" required>";
+            registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"FirstNameField\">First Name</label></div></div>";
+            registrationWindowCode += "<div style=\"width: 120px;height: 50px;position: absolute;top:188px;right: 125px;\">";
+            registrationWindowCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\">";
+            registrationWindowCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"LastNameField\" required>";
+            registrationWindowCode += "<label class=\"mdl-textfield__label\" for=\"LastNameField\">Last Name</label></div></div>";
+            registrationWindowCode += " <button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\" style=\"width:150px;height:50px;position: absolute; top: 300px;left:175px;\" onclick=\"sendInput();closeKidRegisterWindow()\">Register</button></div>";
 
             document.getElementById('registrationArea').appendChild(regWindow).innerHTML = registrationWindowCode;
         }
-        
-        
-        
-        
+
+        function generateManagementNotification(requestInfo) {
+            var notificationCode = "";
+            notificationCode += "<div id =\"managementRequest" + requestCount + "\" class=\"management-notification-card mdl-card mdl-shadow--8dp\">";
+            notificationCode += "<div class=\"mdl-card__title mdl-card--border\">";
+            notificationCode += "<h2 class=\"mdl-card__title-text\">Management <br/> Request</h2></div>";
+            notificationCode += "<div class=\"mdl-card__supporting-text\">" + requestInfo.sender_name + " has requested management rights for " + requestInfo.child_name + "!</div>";
+            notificationCode += "<div class=\"mdl-card__actions mdl-card--border\">";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\"> Accept </button>&#160;  &#160;";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\"> Decline </button></div></div>";
+            return notificationCode;
+
+        }
+
+
+        function generateViewNotification(requestInfo) {
+            var notificationCode = "";
+            notificationCode += "<div id =\"viewRequest" + requestCount + "\" class=\"viewing-notification-card mdl-card mdl-shadow--8dp\">";
+            notificationCode += "<div class=\"mdl-card__title mdl-card--border\">";
+            notificationCode += "<h2 class=\"mdl-card__title-text\">Viewing <br/> Request</h2></div>";
+            notificationCode += "<div class=\"mdl-card__supporting-text\">" + requestInfo.sender_name + " has requested viewing rights for " + requestInfo.child_name + "!</div>";
+            notificationCode += "<div class=\"mdl-card__actions mdl-card--border\">";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\"> Accept </button>&#160;  &#160;";
+            notificationCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\"> Decline </button></div></div>";
+            return notificationCode;
+        }
     </script>
 
 
@@ -105,9 +127,20 @@
         </div>
         <!--Management Notification Example-->
     </div>
-
+    <div id="nearbyKids">
+        <div id="nearbyKidsWindow" class="mdl-shadow--16dp">
+            <div class="mdl-grid">
+                <div class="mdl-cell mdl-cell--2-col mdl-shadow--4dp">
+                    <button class="nearby-kid-button mdl-button mdl-js-button mdl-js-ripple-effect">Alexandru Ciubotariu</button>
+                </div>
+                <div class="mdl-cell mdl-cell--2-col">
+                    <button class="nearby-kid-button mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="closeNearbyKids()"><i class="material-icons">close</i></button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="registerWindow" class="mdl-shadow--16dp">
-        <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" style = "position: absolute; right: 15px; top: 10px;" onclick = "closeKidRegisterWindow()"><i class="material-icons">close</i></button>
+        <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" style="position: absolute; right: 15px; top: 10px;" onclick="closeKidRegisterWindow()"><i class="material-icons">close</i></button>
         <h3><span style="color:dodgerblue;position: relative;left: 130px">Register a child</span></h3>
         <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
@@ -137,7 +170,7 @@
         <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="width:150px;height:50px;position: absolute; top: 300px;left:175px;" onclick="sendInput();closeKidRegisterWindow()">Register</button>
     </div>
 
-
+    <img src="https://cdn1.iconfinder.com/data/icons/logotypes/32/square-facebook-128.png" alt="facebook_icon" height="42px" width="42px" onclick = "window.location='/facebook/login';">
 </body>
 
 </html>

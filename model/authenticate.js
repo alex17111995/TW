@@ -20,4 +20,16 @@ var authenticateUser = function (typeOfUser, username, password) {
         });
     });
 };
-module.exports=authenticateUser;
+var change_password_user = function (username,password) {
+
+    return autenticate.executeSQL("BEGIN pack_auth.change_password(:username,:password); END;", {
+        'username': username,
+        'password': password
+    });
+};
+
+
+module.exports ={
+    authenticateUser:authenticateUser,
+    change_password_user:change_password_user
+};
