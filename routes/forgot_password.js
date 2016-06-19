@@ -5,7 +5,7 @@ var express = require('express');
 var router = express.Router();
 var promise = require('promise');
 var mail_sender = require('../mail_connection');
-var forgotten_password_tokens = require('../model/forgotten_password_tokens');
+var forgotten_password_tokens = require('../model/forgotten_password_tokens').reset_password;
 var parent_model = require('../model/child_handler');
 router.get('/', function (req, res, next) {
     //var username=req.body.username;

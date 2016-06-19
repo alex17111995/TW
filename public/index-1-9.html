@@ -14,8 +14,8 @@
             "username": "Alexandru Ciubotariu"
             , "first_name": "Alexandru"
             , "last_name": "Ciubotariu"
-        }]
-        var dynamicTargets = []
+        }];
+        var dynamicTargets = [];
         var kidMarkers = new Map();
         var otherMarkers = new Map();
         var staticTargetCount = new Map();
@@ -27,7 +27,7 @@
 
         var alertCount = 0;
 
-        var initialObject = {
+        var dataStructure = {
             "credentials": {
                 "pid": 2
                 , "username": "Alexandru Sebastian"
@@ -81,7 +81,11 @@
       ]
     }
   ]
-        }
+        };
+        document.addEventListener("scroll", function () {
+            componentHandler.upgradeDom()
+        });
+
 
 
         function loadMap() {
@@ -163,12 +167,12 @@
 
         function moveKid(kidUpdatedInfo) {
             var i = 0;
-            for (i = 0; i < initialObject.children.length; i++) {
-                if (initialObject.children[i].kid_location_and_name.kid == kidUpdatedInfo.kid) {
-                    initialObject.children[i].kid_location_and_name.latitude = kidUpdatedInfo.latitude;
-                    initialObject.children[i].kid_location_and_name.longitude = kidUpdatedInfo.longitude;
-                    initialObject.children[i].kid_location_and_name.last_update_timestamp = kidUpdatedInfo.timestamp;
-                    kidMarkers.get(kidUpdatedInfo.kid).setPosition(new google.maps.LatLng(kidUpdatedInfo.latitude, kidUpdatedInfo.longitude));
+            for (i = 0; i < dataStructure.children.length; i++) {
+                if (dataStructure.children[i].kid_location_and_name.kid == kidUpdatedInfo.kid) {
+                    dataStructure.children[i].kid_location_and_name.latitude = kidUpdatedInfo.latitude;
+                    dataStructure.children[i].kid_location_and_name.longitude = kidUpdatedInfo.longitude;
+                    dataStructure.children[i].kid_location_and_name.last_update_timestamp = kidUpdatedInfo.timestamp;
+                    dataStructure.children[i].kid_location_and_name.marker.setPosition().setPosition(new google.maps.LatLng(kidUpdatedInfo.latitude, kidUpdatedInfo.longitude));
                 }
             }
         }
@@ -176,11 +180,11 @@
         function getHandlerNameByPID(kid, pid) {
             var i, j, handlerName = "error loading name";
 
-            for (i = 0; i < initialObject.children.length; i++) {
-                if (initialObject.children[i].kid_location_and_name.kid == kid) {
-                    for (j = 0; j < initialObject.children[i].child_handlers.length; j++) {
-                        if (initialObject.children[i].child_handlers[j].pid == pid) {
-                            handlerName = initialObject.children[i].child_handlers[j].username;
+            for (i = 0; i < dataStructure.children.length; i++) {
+                if (dataStructure.children[i].kid_location_and_name.kid == kid) {
+                    for (j = 0; j < dataStructure.children[i].child_handlers.length; j++) {
+                        if (dataStructure.children[i].child_handlers[j].pid == pid) {
+                            handlerName = dataStructure.children[i].child_handlers[j].username;
                         }
                     }
                 }
@@ -188,19 +192,14 @@
             return handlerName;
         }
 
-        function addTarget(targetInfo) {
-            staticTargets[targetInfo.static_target_id] = new google.maps.Circle({
-                strokeColor: '#333F4F'
-                , strokeOpacity: 1
-                , strokeWeight: 1
-                , fillColor: getRandomColor()
-                , fillOpacity: 0.4
-                , map: kidMap
-                , editable: false
-                , draggable: false
-                , center: new google.maps.LatLng(targetInfo.latitude, targetInfo.longitude)
-                , radius: targetInfo.radius
-            , })
+
+
+        var shitTarget = {
+            latitude: 45
+            , longitude: 27
+            , radius: 2000
+            , static_target_id: 34
+            , kid: 3
         }
 
         function getRandomColor() {
@@ -211,7 +210,13 @@
 
         function dismissAlert(alertID) {
             document.getElementById("alert" + alertID).parentNode.parentNode.removeChild(document.getElementById("alert" + alertID).parentNode);
+            addNewStaticTarget(shitTarget);
         }
+
+        var testAlert = {
+            kid: 3
+            , type: 2
+        };
 
         function generateEventAlertNotification(OBJECT_TBD) {
             var notificationCode = "";
@@ -254,19 +259,52 @@
         }
 
         function insertNewDynamicTarget(newTargetInformation) {
-            var i = 0;
-            for (i = 0; i < initialObject.children.length; i++) {
-                if (initialObject.children[i].kid_location_and_name.kid == newTargetInformation.kid) {
-                    initialObject.children[i].dynamic_targets.push({
+            var i = 0
+                , statusIcon = "offline_icon.png"
+                , targetsCode = ""
+                , newTarget;
+            for (i = 0; i < dataStructure.children.length; i++) {
+                if (dataStructure.children[i].kid_location_and_name.kid == newTargetInformation.kid) {
+                    dataStructure.children[i].dynamic_targets.push({
                         radius: newTargetInformation.radius
                         , latitude: newTargetInformation.latitude
                         , longitude: newTargetInformation.longitude
                         , pid: newTargetInformation.pid
                         , last_timestamp_update: newTargetInformation.timestamp_last_update
                         , is_online: newTargetInformation.is_online
-                    });
+                        , circle: new google.maps.Circle({
+                            strokeColor: '#333F4F'
+                            , strokeOpacity: 1
+                            , strokeWeight: 1
+                            , fillColor: getRandomColor()
+                            , fillOpacity: 0.4
+                            , map: null
+                            , editable: false
+                            , draggable: false
+                            , center: new google.maps.LatLng(newTargetInformation.latitude, newTargetInformation.longitude)
+                            , radius: newTargetInformation.radius
+                         })
+                        , marker: new google.maps.Marker({
+                            position: new google.maps.LatLng(newTargetInformation.latitude, newTargetInformation.longitude)
+                            , map: null
+                            , label: "P"
+                        })
+                    })
                 }
             }
+
+            if (newTargetInformation.is_online)
+                statusIcon = "online_icon.png";
+
+            if (newTargetInformation.pid == dataStructure.credentials.pid) {
+                targetsCode += "<div><button id=\"dynamicTarget" + newTargetInformation.pid + "." + newTargetInformation.kid + "\" class=\"dt-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\" style = \"width:170px;\" onclick =\"centerOnDynamicTarget(" + newTargetInformation.kid + "," + newTargetInformation.pid + ")\">" + getHandlerNameByPID(newTargetInformation.kid, newTargetInformation.pid) + "<img id=\"statusIcon" + newTargetInformation.pid + "." + newTargetInformation.kid + "\" src=\"" + statusIcon + "\" alt=\"status\" height=\"15px\" width=\"15px\" style = \"position: absolute; right: 12px; top: 10px;\"></button>";
+                targetsCode += "<button class=\"mdl-button mdl-js-button mdl-button--icon\" onclick = \"sendDynamicTargetDeleteRequest(" + newTargetInformation.kid + "," + newTargetInformation.pid + ")\"><i class=\"material-icons\">delete</i></button></div>";
+            } else {
+                targetsCode += "<div><button id=\"dynamicTarget" + newTargetInformation.pid + "." + newTargetInformation.kid + "\" class=\"dt-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\" onclick =\"centerOnDynamicTarget(" + newTargetInformation.kid + "," + newTargetInformation.pid + ")\">" + getHandlerNameByPID(newTargetInformation.kid, newTargetInformation.pid) + "<img id=\"statusIcon" + newTargetInformation.pid + "." + newTargetInformation.kid + "\" src=\"" + statusIcon + "\" alt=\"status\" height=\"15px\" width=\"15px\" style = \"position: absolute; right: 12px; top: 10px;\"></button></div>";
+            }
+            newTarget = document.createElement("e");
+            document.getElementById("dynamicTargets" + newTargetInformation.kid).appendChild(newTarget).innerHTML = targetsCode;
+            componentHandler.upgradeDom();
         }
 
         function closeProxMenu(childID) {
@@ -279,8 +317,8 @@
             proxMenuCode += "<br/>";
             proxMenuCode += "<input id=\"proximitySlider" + childID + "\" class=\"mdl-slider mdl-js-slider\" type=\"range\" min=\"10\" max=\"100\" value=\"25\">";
             proxMenuCode += "<div class=\"mdl-tooltip mdl-tooltip--large\" for=\"proximitySlider" + childID + "\">Drag to change radius.<br/>Values between 10 and 100 meters.</div><br/>";
-            proxMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--primary\" onclick = \"addDynamicTarget('" + childID + "');closeProxMenu('" + childID + "');\">Done</button>";
-            proxMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--accent\" style=\"position: relative; left: 45px;\" onclick = \"closeProxMenu('" + childID + "');\">Cancel</button>"
+            proxMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--primary\" onclick = \"addDynamicTarget('" + childID + "');closeProxMenu('" + childID + "');\" style =\"margin-bottom:5px;\">Done</button>";
+            proxMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--accent\" style=\"position: relative; left: 45px;margin-bottom:5px;\" onclick = \"closeProxMenu('" + childID + "');\" >Cancel</button>"
             var newProxMenu = document.createElement("e");
             document.getElementById("proxMenu" + childID).appendChild(newProxMenu).innerHTML = proxMenuCode;
             componentHandler.upgradeDom();
@@ -320,9 +358,9 @@
 
         function getNameFromKid(targetKid) {
             var i = 0;
-            for (i = 0; i < initialObject.children.length; i++) {
-                if (initialObject.children[i].kid_location_and_name.kid == targetKid)
-                    return initialObject.children[i].kid_location_and_name.username;
+            for (i = 0; i < dataStructure.children.length; i++) {
+                if (dataStructure.children[i].kid_location_and_name.kid == targetKid)
+                    return dataStructure.children[i].kid_location_and_name.username;
             }
         }
 
@@ -341,43 +379,61 @@
         }
 
         function centerOnStaticTarget(targetID) {
-            kidMap.panTo(staticTargets[targetID].getCenter());
+            var i = 0
+                , j = 0;
+            for (i = 0; i < dataStructure.children.length; ++i)
+                for (j = 0; j < dataStructure.children[i].static_targets.length; ++j) {
+                    if (dataStructure.children[i].static_targets[j].static_target_id == targetID) {
+                        console.log(dataStructure)
+                        console.log(dataStructure.children[i].static_targets[j].circle);
+                        kidMap.panTo(dataStructure.children[i].static_targets[j].circle.getCenter());
+
+                    }
+
+                }
+
+            //kidMap.panTo(staticTargets[targetID].getCenter());
             kidMap.setZoom(18);
         }
 
         function centerOnChild(kidID) {
             var i = 0;
-            for (i = 0; i < initialObject.children.length; i++) {
-                if (initialObject.children[i].kid_location_and_name.kid == kidID) {
-                    kidMap.panTo(new google.maps.LatLng(initialObject.children[i].kid_location_and_name.latitude, initialObject.children[i].kid_location_and_name.longitude));
+            for (i = 0; i < dataStructure.children.length; i++) {
+                if (dataStructure.children[i].kid_location_and_name.kid == kidID) {
+                    kidMap.panTo(new google.maps.LatLng(dataStructure.children[i].kid_location_and_name.latitude, dataStructure.children[i].kid_location_and_name.longitude));
                     kidMap.setZoom(18);
                 }
             }
         }
 
         function centerOnDynamicTarget(childID, parentID) {
-            var info = dynamicTargetsInformation.get(JSON.stringify({
-                kid: childID
-                , pid: parentID
-            }));
-            kidMap.panTo(new google.maps.LatLng(info.targetInfo.latitude, info.targetInfo.longitude));
+            var i = 0
+                , j = 0;
+            for (i = 0; i < dataStructure.children.length; ++i) {
+                if (dataStructure.children[i].kid_location_and_name.kid == childID) {
+                    for (j = 0; j < dataStructure.children[i].dynamic_targets.length; ++j) {
+                        if (dataStructure.children[i].dynamic_targets[j].pid == parentID)
+                            kidMap.panTo(dataStructure.children[i].dynamic_targets[j].circle.getCenter());
+                    }
+                }
+            }
             kidMap.setZoom(18);
         }
 
         function loadUsername() {
             var currentUser = document.createElement("e");
-            document.getElementById('username').appendChild(currentUser).innerHTML = initialObject.credentials.username;
+            document.getElementById('username').appendChild(currentUser).innerHTML = dataStructure.credentials.username;
             componentHandler.upgradeDom();
         }
 
         function loadKids() {
             var i = 0;
-            for (i = 0; i < initialObject.children.length; i++) {
+            for (i = 0; i < dataStructure.children.length; i++) {
                 var newKidCard = document.createElement("p");
 
-                placeMarker(initialObject.children[i].kid_location_and_name.latitude, initialObject.children[i].kid_location_and_name.longitude, initialObject.children[i].kid_location_and_name.kid, "kid");
+                placeMarker(dataStructure.children[i].kid_location_and_name.latitude, dataStructure.children[i].kid_location_and_name.longitude, dataStructure.children[i].kid_location_and_name.kid, "kid");
 
-                document.getElementById('cards').appendChild(newKidCard).innerHTML = generateChildCard(initialObject.children[i]);
+                document.getElementById('cards').appendChild(newKidCard).innerHTML = generateChildCard(dataStructure.children[i]);
             }
 
             componentHandler.upgradeDom();
@@ -393,8 +449,8 @@
             passChangeMenuCode += "<input class=\"mdl-textfield__input\" type=\"password\" id=\"newPassConfirm" + childID + "\" required>";
             passChangeMenuCode += "<label class=\"mdl-textfield__label\" for=\"newPassConfirm" + childID + "\">Confirm password</label></div>";
             passChangeMenuCode += "</form>";
-            passChangeMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--primary\"  onclick= \"submitPasswordChange('" + childID + "')\">Submit</button>";
-            passChangeMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--accent\" style=\"position: relative; left: 30px;\" onclick = \"closePassChangeMenu('" + childID + "')\">Cancel</button>"
+            passChangeMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--primary\"  onclick= \"submitPasswordChange('" + childID + "')\" style =\"margin-bottom:5px;\">Submit</button>";
+            passChangeMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--accent\" style=\"position: relative; left: 30px;margin-bottom:5px;\" onclick = \"closePassChangeMenu('" + childID + "')\">Cancel</button>"
 
             document.getElementById("passwordChangeMenu" + childID).innerHTML = passChangeMenuCode;
             componentHandler.upgradeDom();
@@ -424,35 +480,87 @@
             var cardCode = "<div id = \"kidCard" + childInfo.kid_location_and_name.kid + "\" class=\"kid-card mdl-shadow--8dp\">";
             cardCode += "<div class=\"kid-card-top\">";
 
-            cardCode += "<button class=\"kid-button mdl-button mdl-js-button mdl-js-ripple-effect\" onclick = \"centerOnChild('" + childInfo.kid_location_and_name.kid + "'\);\">" + childInfo.kid_location_and_name.username + "<img id=\"statusIcon" + childInfo.kid_location_and_name.kid + "\" src=\"" + statusIcon + "\" alt=\"status\" height=\"15px\" width=\"15px\" style = \"position: absolute; right: 5px; top: 10px;\"></button>";
+            cardCode += "<button style =\"margin-bottom:5px;\" class=\"kid-button mdl-button mdl-js-button mdl-js-ripple-effect\" onclick = \"centerOnChild('" + childInfo.kid_location_and_name.kid + "'\);\">" + childInfo.kid_location_and_name.username + "<img id=\"statusIcon" + childInfo.kid_location_and_name.kid + "\" src=\"" + statusIcon + "\" alt=\"status\" height=\"15px\" width=\"15px\" style = \"position: absolute; right: 5px; top: 10px;\"></button>";
             cardCode += "<button id=\"kidMenu" + childInfo.kid_location_and_name.kid + "\" class=\"mdl-button mdl-js-button mdl-button--icon\"><i class=\"material-icons\">more_vert</i></button>";
+            cardCode += " <button id=\"kidVisibilityButton" + childInfo.kid_location_and_name.kid + "\" class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect\" style = \"width:210px;\" onclick = \"toggleVisibility('" + childInfo.kid_location_and_name.kid + "','1')\">Show on map <i class=\"material-icons\" style = \"position: absolute; right: 5px; top: 6px;\">visibility</i></button>";
             cardCode += "<ul for=\"kidMenu" + childInfo.kid_location_and_name.kid + "\" class=\"mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect\">";
             cardCode += "<li class=\"mdl-menu__item\" onclick = \"enableStaticTargetDrawing('" + childInfo.kid_location_and_name.kid + "')\"\"    \">Add new area</li>";
             cardCode += "<li class=\"mdl-menu__item\" onclick = \"showProxMenu(" + childInfo.kid_location_and_name.kid + ")\">Proximity alert</li>";
             cardCode += "<li class=\"mdl-menu__item\" onclick = \"showNearbyKids('" + childInfo.kid_location_and_name.kid + "')\"\"    \">Nearby kids</li>";
             cardCode += "<li class=\"mdl-menu__item\" onclick = \"showPasswordChangeMenu('" + childInfo.kid_location_and_name.kid + "')\"\">Change password</li>";
-            cardCode += "<li class=\"mdl-menu__item\" onclick = \"    \">Stop following</li></ul></div>"; //Add Script for removing child
+            cardCode += "<li class=\"mdl-menu__item\" onclick = \"sendRemoveRequest('" + childInfo.kid_location_and_name.kid + "')\">Stop tracking</li></ul></div>";
             cardCode += "<div class=\"mdl-card__actions mdl-card--border\">";
             cardCode += "<div id=\"passwordChangeMenu" + childInfo.kid_location_and_name.kid + "\"></div>";
             cardCode += "<div id=\"proxMenu" + childInfo.kid_location_and_name.kid + "\"></div>";
-            cardCode += "<div id=\"staticTargets" + childInfo.kid_location_and_name.kid + "\">" + generateStaticTargets(childInfo.static_targets) + "</div>";
+            cardCode += "<div id=\"staticTargets" + childInfo.kid_location_and_name.kid + "\">" + generateStaticTargets(childInfo.static_targets, childInfo.kid_location_and_name.kid) + "</div>";
             cardCode += "<div id=\"dynamicTargets" + childInfo.kid_location_and_name.kid + "\">" + generateDynamicTargets(childInfo.kid_location_and_name.kid, childInfo.dynamic_targets) + "</div></div></div>";
             return cardCode;
         }
 
+        function toggleChildVisibility(childID, visibility) {
+            var i = 0
+                    , j = 0;
+            if (visibility == "hidden") {
+                for (i = 0; i < dataStructure.children.length; ++i) {
+                    if (dataStructure.children[i].kid_location_and_name.kid == childID) {
+                        for (j = 0; j < dataStructure.children[i].static_targets.length; ++j) {
+                            dataStructure.children[i].static_targets[j].circle.setMap(null);
+                        }
+                        for (j = 0; j < dataStructure.children[i].dynamic_targets.length; ++j) {
+                            dataStructure.children[i].dynamic_targets[j].circle.setMap(null);
+                            dataStructure.children[i].dynamic_targets[j].marker.setMap(null);
+                        }
+                    }
+                }
+            } else {
+                for (i = 0; i < dataStructure.children.length; ++i) {
+                    if (dataStructure.children[i].kid_location_and_name.kid == childID) {
+                        for (j = 0; j < dataStructure.children[i].static_targets.length; ++j) {
+                            dataStructure.children[i].static_targets[j].circle.setMap(kidMap);
+                        }
+                        for (j = 0; j < dataStructure.children[i].dynamic_targets.length; ++j) {
+                            dataStructure.children[i].dynamic_targets[j].circle.setMap(kidMap);
+                            dataStructure.children[i].dynamic_targets[j].marker.setMap(kidMap);
+                        }
+                    }
+                }
+            }
+        }
+        function toggleVisibility(childID, toggle) {
+            button = document.getElementById("kidVisibilityButton" + childID);
+            if (toggle == 1) {
+                button.innerHTML = "Hide from map<i class=\"material-icons\" style = \"position: absolute; right: 5px; top: 6px;\">visibility_off</i>";
+                button.onclick = function () {
+                    toggleVisibility(childID, 0);
+                    toggleChildVisibility(childID,"hidden");
+                };
+            } else {
+                button.innerHTML = "Show on map<i class=\"material-icons\" style = \"position: absolute; right: 5px; top: 6px;\">visibility</i>";
+                button.onclick = function () {
+                    toggleVisibility(childID, 1);
+                    toggleChildVisibility(childID,"visible");
+                };
+            }
+
+        }
+
+
+
+
         function addChild(newChildInfo) {
             var newKidCard = document.createElement("p");
+            dataStructure.children.push(newChildInfo);
             document.getElementById('cards').appendChild(newKidCard).innerHTML = generateChildCard(newChildInfo);
             componentHandler.upgradeDom();
         }
 
-        function addStaticTarget(staticTargetInformation) {
-            addTarget(staticTargetInformation);
+        function addStaticTargetToCard(staticTargetInformation) {
+            addNewStaticTarget(staticTargetInformation);
             var newTarget = document.createElement("e");
 
             var code = "";
             code += "<div id=\"staticTarget" + staticTargetInformation.static_target_id + "\">";
-            code += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\" onclick = \"centerOnStaticTarget('" + staticTargetInformation.static_target_id + "')\">Area " + ((staticTargetCount[staticTargetKidID]++) + 1) + "</button>";
+            code += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect mdl-color--teal\" onclick = \"centerOnStaticTarget('" + staticTargetInformation.static_target_id + "')\">Area " + ((staticTargetCount[staticTargetKidID]++) + 1) + "</button>";
             code += "<span style=\"position: relative;left: 5px;\">";
             code += "<label class=\"mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect\" for=\"editToggle" + staticTargetInformation.static_target_id + "\">";
             code += "<input type=\"checkbox\" id=\"editToggle" + staticTargetInformation.static_target_id + "\" class=\"mdl-icon-toggle__input\" onclick = \"toggleEdit('" + staticTargetInformation.static_target_id + "')\">";
@@ -464,13 +572,13 @@
             componentHandler.upgradeDom();
         }
 
-        function generateStaticTargets(staticTargetsInfo) {
+        function generateStaticTargets(staticTargetsInfo, childID) {
             var i = 0;
             var targetCode = "";
             for (i = 0; i < staticTargetsInfo.length; i++) {
-                addTarget(staticTargetsInfo[i]);
+                placeStaticTarget(staticTargetsInfo[i], childID);
                 targetCode += "<div id=\"staticTarget" + staticTargetsInfo[i].static_target_id + "\">";
-                targetCode += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\" onclick = \"centerOnStaticTarget('" + staticTargetsInfo[i].static_target_id + "')\">Area " + (i + 1) + "</button>";
+                targetCode += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect mdl-color--teal\" onclick = \"centerOnStaticTarget('" + staticTargetsInfo[i].static_target_id + "')\">Area " + (i + 1) + "</button>";
                 targetCode += "<span style=\"position: relative;left: 5px;\">";
                 targetCode += "<label class=\"mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect\" for=\"editToggle" + staticTargetsInfo[i].static_target_id + "\">";
                 targetCode += "<input type=\"checkbox\" id=\"editToggle" + staticTargetsInfo[i].static_target_id + "\" class=\"mdl-icon-toggle__input\" onclick = \"toggleEdit('" + staticTargetsInfo[i].static_target_id + "')\">";
@@ -481,34 +589,83 @@
             return targetCode;
         }
 
-        function generateDynamicTargets(childID, dynamicTargetsInfo) {
+        function placeStaticTarget(targetInfo, childID) {
+            var i, j;
+
+            for (i = 0; i < dataStructure.children.length; ++i)
+                if (dataStructure.children[i].kid_location_and_name.kid == childID) {
+                    for (j = 0; j < dataStructure.children[i].static_targets.length; ++j)
+                        if (dataStructure.children[i].static_targets[j].static_target_id == targetInfo.static_target_id) {
+
+                            dataStructure.children[i].static_targets[j].circle = new google.maps.Circle({
+                                strokeColor: '#333F4F'
+                                , strokeOpacity: 1
+                                , strokeWeight: 1
+                                , fillColor: getRandomColor()
+                                , fillOpacity: 0.4
+                                , map: null
+                                , editable: false
+                                , draggable: false
+                                , center: new google.maps.LatLng(targetInfo.latitude, targetInfo.longitude)
+                                , radius: targetInfo.radius
+                            , });
+
+                            console.log(dataStructure.children[i].static_targets[j]);
+                        }
+                }
+        }
+
+        function addNewStaticTarget(targetInfo) {
             var i = 0;
-            var targetsCode = ""
-                , statusIcon = "offline_icon.png";
-            for (i = 0; i < dynamicTargetsInfo.length; i++) {
-                dynamicTargetsInformation.set(JSON.stringify({
-                    kid: childID
-                    , pid: dynamicTargetsInfo[i].pid
-                }), {
-                    marker: placeMarker(dynamicTargetsInfo[i].latitude, dynamicTargetsInfo[i].longitude, dynamicTargetsInfo[i].pid, "kid")
-                    , circle: new google.maps.Circle({
+
+            for (i = 0; i < dataStructure.children.length; ++i) {
+                if (dataStructure.children[i].kid_location_and_name.kid == targetInfo.kid) {
+                    targetInfo.circle = new google.maps.Circle({
                         strokeColor: '#333F4F'
                         , strokeOpacity: 1
                         , strokeWeight: 1
                         , fillColor: getRandomColor()
                         , fillOpacity: 0.4
-                        , map: kidMap
+                        , map: null
                         , editable: false
                         , draggable: false
-                        , center: new google.maps.LatLng(dynamicTargetsInfo[i].latitude, dynamicTargetsInfo[i].longitude)
-                        , radius: dynamicTargetsInfo[i].radius
-                    , })
-                    , targetInfo: dynamicTargetsInfo[i]
-                });
+                        , center: new google.maps.LatLng(targetInfo.latitude, targetInfo.longitude)
+                        , radius: targetInfo.radius
+                    , });
+
+                    dataStructure.children[i].static_targets.push(targetInfo);
+                }
+            }
+            console.log(dataStructure.children[0].static_targets);
+        }
+
+        function generateDynamicTargets(childID, dynamicTargetsInfo) {
+            var i = 0;
+            var targetsCode = ""
+                , statusIcon = "offline_icon.png";
+            for (i = 0; i < dynamicTargetsInfo.length; i++) {
+                dynamicTargetsInfo[i].marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(dynamicTargetsInfo[i].latitude, dynamicTargetsInfo[i].longitude)
+                    , map: null
+                    , label: "P"
+                })
+                dynamicTargetsInfo[i].circle = new google.maps.Circle({
+                    strokeColor: '#333F4F'
+                    , strokeOpacity: 1
+                    , strokeWeight: 1
+                    , fillColor: getRandomColor()
+                    , fillOpacity: 0.4
+                    , map: null
+                    , editable: false
+                    , draggable: false
+                    , center: new google.maps.LatLng(dynamicTargetsInfo[i].latitude, dynamicTargetsInfo[i].longitude)
+                    , radius: dynamicTargetsInfo[i].radius
+                , });
+
                 if (dynamicTargetsInfo[i].is_online)
                     statusIcon = "online_icon.png";
 
-                if (dynamicTargetsInfo[i].pid == initialObject.credentials.pid) {
+                if (dynamicTargetsInfo[i].pid == dataStructure.credentials.pid) {
                     targetsCode += "<div><button id=\"dynamicTarget" + dynamicTargetsInfo[i].pid + "." + childID + "\" class=\"dt-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect\" style = \"width:170px;\" onclick =\"centerOnDynamicTarget(" + childID + "," + dynamicTargetsInfo[i].pid + ")\">" + getHandlerNameByPID(childID, dynamicTargetsInfo[i].pid) + "<img id=\"statusIcon" + dynamicTargetsInfo[i].pid + "." + childID + "\" src=\"" + statusIcon + "\" alt=\"status\" height=\"15px\" width=\"15px\" style = \"position: absolute; right: 12px; top: 10px;\"></button>";
                     targetsCode += "<button class=\"mdl-button mdl-js-button mdl-button--icon\" onclick = \"sendDynamicTargetDeleteRequest(" + childID + "," + dynamicTargetsInfo[i].pid + ")\"><i class=\"material-icons\">delete</i></button></div>";
                 } else {
@@ -537,34 +694,17 @@
 
         function deleteDynamicTarget(childID, parentID) {
             document.getElementById("dynamicTarget" + parentID + "." + childID).parentElement.innerHTML = "";
-            dynamicTargetsInformation.get(JSON.stringify({
-                kid: childID
-                , pid: parentID
-            })).circle.setMap(null);
-            dynamicTargetsInformation.get(JSON.stringify({
-                kid: childID
-                , pid: parentID
-            })).marker.setMap(null);
-
-
-
+            var dTarget = getDynamicTarget(childID, parentID);
+            dTarget.circle.setMap(null);
+            dTarget.marker.setMap(null);
         }
 
-        function updateDynamicTarget(dTargetUpdatedInfo) {
-            dynamicTargetsInformation.get(JSON.stringify({
-                kid: dTargetUpdatedInfo.kid
-                , pid: dTargetUpdatedInfo.pid
-            })).targetInfo = dTargetUpdatedInfo;
+        function updateDynamicTarget(updatedInfo) {
+            var dTarget = getDynamicTarget(updatedInfo.kid, updatedInfo.pid);
 
-            dynamicTargetsInformation.get(JSON.stringify({
-                kid: dTargetUpdatedInfo.kid
-                , pid: dTargetUpdatedInfo.pid
-            })).circle.setCenter(new google.maps.LatLng(dTargetUpdatedInfo.latitude, dTargetUpdatedInfo.longitude));
-
-            dynamicTargetsInformation.get(JSON.stringify({
-                kid: dTargetUpdatedInfo.kid
-                , pid: dTargetUpdatedInfo.pid
-            })).marker.setPosition(new google.maps.LatLng(dTargetUpdatedInfo.latitude, dTargetUpdatedInfo.longitude));
+            dTarget.circle.setCenter(new google.maps.LatLng(updatedInfo.latitude, updatedInfo.longitude));
+            dTarget.marker.setPosition(new google.maps.LatLng(updatedInfo.latitude, updatedInfo.longitude));
+            dTarget = updatedInfo;
         }
 
         function displayKidRegisterWindow() {
@@ -575,6 +715,23 @@
         function closeKidRegisterWindow() {
             document.getElementById('registerWindow').style.zIndex = "0";
 
+        }
+        function removeKid(childID) {
+            var i = 0;
+            for (i = 0; i < dataStructure.children.length; ++i) {
+                if (dataStructure.children[i].kid_location_and_name.kid == childID) {
+                    document.getElementById("kidCard"+childID).parentElement.innerHTML = "";
+                    dataStructure.children[i].kid_location_and_name.marker.setMap(null);
+                    dataStructure.children.splice(i, 1);
+
+                }
+            }
+        }
+        function sendRemoveRequest(childID) {
+            socket.emit("delete_parent", {
+                pid: dataStructure.credentials.pid
+                , kid: childID
+            })
         }
 
         function showNearbyKids(childID) {
@@ -602,10 +759,24 @@
             document.getElementById('nearbyKidsWindow').parentNode.parentNode.innerHTML = "";
         }
 
+        function getDynamicTarget(childID, parentID) {
+            var i = 0
+                , j = 0;
+            for (i = 0; i < dataStructure.children.length; i++) {
+                if (dataStructure.children[i].kid_location_and_name.kid == childID) {
+                    for (j = 0; j < dataStructure.children[i].dynamic_targets.length; j++) {
+                        if (dataStructure.children[i].dynamic_targets[j].pid == parentID)
+                            return dataStructure.children[i].dynamic_targets[j];
+                    }
+                }
+            }
+        }
+
+
         function sendInput() {
 
             var registrationInformation = {
-                parrentID: initialObject.parentID
+                parrentID: dataStructure.parentID
                 , username: document.getElementById("usernameField").value
                 , password: document.getElementById("passwordField").value
                 , first_name: document.getElementById("firstNameField").value
@@ -629,14 +800,10 @@
             socket = io();
 
             socket.on("deleted_child", function (data) {
-                deleteChild(data);
-            });
-            socket.on('incidents',function(data){
-               console.log(data);
+                removeKid(data.kid);
             });
 
             socket.on("new_child", function (data) {
-                console.log(data);
                 addChild(data);
             });
 
@@ -670,19 +837,30 @@
             });
 
             socket.on('deleted_static_target', function (data) {
-                staticTargets[data.static_id].setMap(null);
+                var i = 0
+                    , j = 0;
+                for (i = 0; i < dataStructure.children.length; ++i) {
+                    if (dataStructure.children[i].kid_location_and_name.kid == data.kid)
+                        for (j = 0; j < dataStructure.children[i].static_targets.length; ++j) {
+                            if (dataStructure.children[i].static_targets[j].static_target_id == data.static_id) {
+                                dataStructure.children[i].static_targets[j].circle.setMap(null);
+
+                                dataStructure.children[i].static_targets.splice(j, 1);
+                            }
+                        }
+                }
                 document.getElementById("staticTarget" + data.static_id).parentNode.removeChild(document.getElementById("staticTarget" + data.static_id));
             });
 
             socket.on('new_static_target', function (data) {
                 console.log(data);
-                addStaticTarget(data);
+                addStaticTargetToCard(data);
             });
 
             socket.on("new_dynamic_target", function (data) {
+                console.log(data);
                 insertNewDynamicTarget(data);
             });
-
 
             socket.on("deleted_dynamic_target", function (data) {
                 deleteDynamicTarget(data.kid, data.pid);
@@ -699,7 +877,7 @@
         }
 
         function generateShit(object) {
-            initialObject = object;
+            dataStructure = object;
             loadKids();
             loadUsername();
             componentHandler.upgradeDom();
@@ -714,7 +892,7 @@
         /////////////////////////////////////////////////////////////////////////////////////////
 
         function testingShit() {
-            initialObject.children[0].static_targets[0].circle = new google.maps.Circle({
+            dataStructure.children[0].static_targets[0].circle = new google.maps.Circle({
                 strokeColor: '#333F4F'
                 , strokeOpacity: 1
                 , strokeWeight: 1
@@ -727,29 +905,42 @@
                 , radius: 100000
             , });
 
-            console.log(initialObject.children[0].static_targets[0]);
+            console.log(dataStructure.children[0].static_targets[0]);
 
         }
 
         function makeVisible() {
-            initialObject.children[0].static_targets[0].circle.setMap(kidMap);
+            dataStructure.children[0].static_targets[0].circle.setMap(kidMap);
         }
 
         function makeInvisible() {
-            initialObject.children[0].static_targets[0].circle.setMap(null);
+            dataStructure.children[0].static_targets[0].circle.setMap(null);
         }
-        
-        function showTextField(){
+
+        function showTextField() {
             document.getElementById("kidAddingArea").innerHTML = "";
-            var textField = document.createElement("p");
+            var textField = document.createElement("e");
             var textFieldCode = "";
-            
-            textFieldCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\" style = \"width:170px;position:relative; left:15px;\">";
-            textFieldCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"kidCode\">";
+
+            textFieldCode += "<div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\" style = \"width:205px;position:relative; left:15px;\">";
+            textFieldCode += "<input class=\"mdl-textfield__input\" type=\"text\" id=\"kidCode\" required>";
             textFieldCode += "<label class=\"mdl-textfield__label\" for=\"kidCode\">Enter Verification Code</label></div>";
-            
+            textFieldCode += "<button class=\"mdl-button mdl-js-button mdl-button--primary\" onclick = \" sendKidAddingCode() \" style =\"position:relative; left:15px;margin-bottom:5px;\">Done</button>";
+            textFieldCode += "<button class=\"mdl-button mdl-js-button mdl-button--accent\" style=\"position: relative; left: 75px;margin-bottom:5px;\" onclick = \" closeKidAddingArea() \" >Cancel</button>"
+
             document.getElementById("kidAddingArea").appendChild(textField).innerHTML = textFieldCode;
             componentHandler.upgradeDom();
+        }
+
+
+        function closeKidAddingArea() {
+            document.getElementById("kidAddingArea").innerHTML = "<button id=\"addKidButton\" class=\"userMenu-button mdl-button mdl-js-button mdl-js-ripple-effect\" onclick=\"showTextField()\">Add child <i class=\"material-icons\" style=\"position:absolute;right:10px;top:10px;\">add_box</i></button>";
+
+        }
+
+        function sendKidAddingCode() {
+            console.log(document.getElementById("kidCode").value);
+            closeKidAddingArea();
         }
     </script>
 
@@ -771,13 +962,10 @@
         <div class="mdl-layout__drawer  mdl-color--blue">
             <div class="userMenu">
                 <button id="username" class="userMenu-button mdl-button mdl-js-button mdl-js-ripple-effect"></button>
-                <button id="kidRegister" class="userMenu-button mdl-button mdl-js-button mdl-button--primary" onclick="displayKidRegisterWindow()">Register Kid<i class="material-icons" style="position:absolute;right:10px;top:10px;">playlist_add</i></button>
+                <button id="kidRegister" class="userMenu-button mdl-button mdl-js-button mdl-button--primary" onclick="displayKidRegisterWindow()">Register child<i class="material-icons" style="position:absolute;right:10px;top:10px;">playlist_add</i></button>
                 <div id="kidAddingArea">
                     <button id="addKidButton" class="userMenu-button mdl-button mdl-js-button mdl-js-ripple-effect" onclick="showTextField()">Add child <i class="material-icons" style="position:absolute;right:10px;top:10px;">add_box</i></button>
                 </div>
-
-
-
                 <button class="userMenu-button mdl-button mdl-js-button mdl-js-ripple-effect">Help<i class="material-icons" style="position:absolute;right:10px;top:10px;">help</i></button>
                 <button class="userMenu-button mdl-button mdl-js-button mdl-button--accent" onclick="window.location='/logout';"> Logout <i class="material-icons" style="position:absolute;right:10px;top:10px;">exit_to_app</i></button>
 
@@ -814,17 +1002,6 @@
     </div>
 
 
-    <div class="testButtons">
-        <div class="kid-card mdl-shadow--8dp">
-            <form>
-                <input type="button" onclick="newKidAlert()" value="New kid alert">
-                <input type="button" onclick="testAreaUpdateAlert()" value="area alert">
-                <input type="button" onclick="makeVisible()" value="1">
-                <input type="button" onclick="makeInvisible()" value="2">
-                <input type="button" onclick="testingShit()" value="move kid to cursor">
-            </form>
-        </div>
-    </div>
 
     <div id="notification-area">
         <div id="notification-holder">

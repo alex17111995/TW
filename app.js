@@ -10,6 +10,7 @@ var login = require('./routes/login');
 var forgot_password = require('./routes/forgot_password');
 var reset_password=require('./routes/reset-password');
 var generate_kid_code=require('./routes/generate_kid_code');
+var add_child_by_code=require('./routes/add_child_by_code');
 var fblogin = require('./routes/facebook-auth');
 var new_target = require('./routes/new_target');
 var logout = require('./routes/sign-out');
@@ -55,7 +56,7 @@ app.use('/logout', logout);
 app.use('/forgot_password', forgot_password);
 app.use('/reset-password',reset_password);
 app.use('/generate-kid-code',generate_kid_code);
-
+app.use('/add-child-by-code',add_child_by_code);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     var err = new Error('Not Found');

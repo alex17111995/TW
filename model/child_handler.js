@@ -304,12 +304,6 @@ child_handler.prototype.register_kid = function (pid, information) {
 };
 
 
-child_handler.prototype.search_parents = function (pid, kid, pattern) {
-
-
-};
-
-
 child_handler.prototype.kids_nearby = function (pid, kid) {
     return new promise(function (resolve, reject) {
         oracleConn.getConnection()
@@ -367,7 +361,7 @@ child_handler.prototype.updateLocation = function (pid, information) {
                 clearTimeoutId(pid);
                 var timeoutID = setTimeout(function () {
                     onOffline(pid)
-                }, 1000 * 60 * 1/4);
+                }, 1000 * 60 * 1 / 4);
                 setTimeoutId(pid, timeoutID);
                 resolve(true);
             })
@@ -434,9 +428,10 @@ child_handler.prototype.delete_parent_of_child = function (pid_granting_access, 
                     var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
                     notifierParent.publish({
                             'channel': 'deleted_child',
-                            'kid': kid
-                        }
-                    );
+                            data:{
+                                'kid': kid
+                            }
+                        });
                     notifierKid.publish({
                         'channel': 'deleted_parent',
                         'data': {
@@ -471,7 +466,7 @@ child_handler.prototype.no_longer_dynamic_target = function (pid_with_kid_acces,
                     channel: 'deleted_dynamic_target',
                     data: {
                         kid: kid,
-                        pid: pid_with_kid_access
+                        pid: pid_with_kid_acces
                     }
 
                 });
@@ -508,16 +503,29 @@ child_handler.prototype.make_parent_dynamic_target = function (pid_with_kid_acce
                     })
                     .then(function (results) {
                         oracleConn.commit_and_close(connection).then(function () {
+                            var latitude,longitude,timestamp_last_update;
                                 var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
+                                if(results.rows.length==0){
+                                    latitude=undefined;
+                                    longitude=undefined;
+                                    timestamp_last_update=undefined;
+                                }
+                            else{
+
+                                    latitude=   results.rows[0][0];
+                                    longitude=    results.rows[0][1];
+                                    timestamp_last_update=results.rows[0][2];
+
+                                }
                                 notifierKid.publish({
                                     channel: 'new_dynamic_target',
                                     data: {
                                         kid: kid,
                                         pid: pid_with_kid_access,
-                                        latitude: results.rows[0][0],
-                                        longitude: results.rows[0][1],
+                                        latitude: latitude,
+                                        longitude: longitude,
                                         is_online: thisInstance.isOnline(pid_with_kid_access),
-                                        timestamp_last_update: results.rows[0][3],
+                                        timestamp_last_update:timestamp_last_update,
                                         radius: radius
                                     }
                                 });
@@ -542,17 +550,15 @@ child_handler.prototype.make_parent_dynamic_target = function (pid_with_kid_acce
 }
 ;
 
-child_handler.prototype.add_parent_to_child = function (pid_parent_granting_access, pid_to_add, kid) {
+child_handler.prototype.add_parent_to_child = function (pid_to_add, kid) {
     return new promise(function (resolve, reject) {
         return oracleConn.getConnection()
             .then(function (connection) {
-                verify_rights(connection, pid_parent_granting_access, kid)
-                    .then(function () {
-                        return oracleConn.execute_query_connection(connection, 'insert into child_handlers(kid,pid) values (:kid,:pid)',
-                            {
-                                pid: pid_to_add,
-                                kid: kid
-                            });
+
+                oracleConn.execute_query_connection(connection, 'insert into child_handlers(kid,pid) values (:kid,:pid)',
+                    {
+                        pid: pid_to_add,
+                        kid: kid
                     })
                     .then(function () {
                         return username_and_name_user_of_parent(connection, pid_to_add)
@@ -600,7 +606,9 @@ child_handler.prototype.add_parent_to_child = function (pid_parent_granting_acce
             .catch(function (error) {
                 reject(error);
             });
+
     });
+
 };
 
 
@@ -679,7 +687,7 @@ child_handler.prototype.delete_static_target = function (pid, static_id) {
                         kid: results.outBinds.kid
                     }
                 });
-                geoFancing(kid);
+                geoFancing(results.outBinds.kid);
                 resolve({
                     static_id: static_id,
                     kid: results.outBinds.kid

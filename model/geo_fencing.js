@@ -22,6 +22,8 @@ var is_inside_any_target = function (static_targets, dynamic_targets, childLatit
 var recompute_geolocation_and_publish_if_neccessary = function (kid) {
     var kidModel = require('./kidModel');
     kidInstance = new kidModel();
+    if(!kidInstance.isOnline(kid))
+        return;
     kidInstance.get_notifications(kid).then(function (child_structure) {
             var lastGeolocation = mapLastGeoFance.get(kid);
             var currentGeolocation = is_inside_any_target(child_structure.static_targets, child_structure.dynamic_targets, child_structure.kid_location_and_name);

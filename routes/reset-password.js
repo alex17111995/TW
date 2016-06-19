@@ -1,7 +1,7 @@
 /**
  * Created by Ciubi on 18/06/16.
  */
-var tokens=require('../model/forgotten_password_tokens');
+var tokens=require('../model/forgotten_password_tokens').reset_password;
 var express = require('express');
 var router = express.Router();
 var authenticate = require('../model/authenticate');

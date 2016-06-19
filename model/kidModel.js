@@ -10,7 +10,7 @@ var oracledb = require('oracledb');
 var mapTimeouts = new Map();
 var geoFancing = require('./geo_fencing');
 var validations = require('./validations');
-
+var incidents=require('./kid_incidents_model');
 
 var clearTimeoutId = function (kid) {
     if (mapTimeouts.get(kid) != undefined) {
@@ -194,8 +194,8 @@ kidModel.prototype.get_handlers_of_child_and_access_request = function (connecti
                     handlers.push({
                         pid: results.rows[i][0],
                         username: results.rows[i][1],
-                        firstname: results.rows[i][2],
-                        lastname: results.rows[i][3]
+                        first_name: results.rows[i][2],
+                        last_name: results.rows[i][3]
                     });
                 }
                 resolve(handlers);
@@ -235,7 +235,7 @@ kidModel.prototype.get_dynamic_targets = function (connection, kid) {
             });
     });
 };
-
+kidModel.prototype.isOnline=isOnline;
 
 kidModel.prototype.get_notifications = function (kid) {//
     return new promise(function (resolve, reject) {
@@ -244,13 +244,15 @@ kidModel.prototype.get_notifications = function (kid) {//
             var promise_static_targets = this.static_targets_of_child(connection, kid);
             var promise_handlers_of_child = this.get_handlers_of_child_and_access_request(connection, kid);
             var promise_dynamic_targets = this.get_dynamic_targets(connection, kid);
-            promise.all([promise_user_credentials, promise_static_targets, promise_handlers_of_child, promise_dynamic_targets])
+            var promise_incidents= incidents.get_incidents(kid);
+            promise.all([promise_user_credentials, promise_static_targets, promise_handlers_of_child, promise_dynamic_targets,promise_incidents])
                 .then(function (array_results) {
                     resolve({
                         'kid_location_and_name': array_results[0],
                         'static_targets': array_results[1],
                         'child_handlers': array_results[2],
-                        'dynamic_targets': array_results[3]
+                        'dynamic_targets': array_results[3],
+                        'incidents':array_results[4]
                     });
                     oracleconnect.releaseConnection(connection);
                 }).catch(function (error) {

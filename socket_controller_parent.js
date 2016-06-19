@@ -105,6 +105,7 @@ var socket_controller = function (socket) {
             socket.on('disconnect', function () {
                 on_disconnect_unsubscribe_channels(handlerID, socket.request.session.id_user);
             });
+
             socket.on('delete_static_target', function (data) {
                 model.delete_static_target(socket.request.session.id_user, data).then(function (result) {
 
@@ -117,41 +118,48 @@ var socket_controller = function (socket) {
 
             });
 
+            socket.on('delete_dynamic_target', function (data) {
+                model.no_longer_dynamic_target(socket.request.session.id_user, data)
+                    .then(function () {
+
+                    })
+                    .catch(function () {
+
+                    });
+            });
 
             socket.on('delete_parent', function (data) {
 
                 model.delete_parent_of_child(socket.request.session.id_user, data.pid, data.kid).then(function (resp) {
                     console.log('merge' + resp);
                 }).catch(function (resp) {
-
+                    console.log(resp);
                 });
 
             });
             socket.on('make_dynamic', function (data) {
-                model.make_parent_dynamic_target(socket.request.session.id_user,data.kid,data.radius);
+                model.make_parent_dynamic_target(socket.request.session.id_user, data.kid, data.radius);
             });
-            socket.on('add_parent', function (data) {
-                model.add_parent_to_child(socket.request.session.id_user, data.pid, data.kid).then(function (resp) {
-                    console.log('merge' + resp);
-                }).catch(function (resp) {
+            //  socket.on('add_parent', function (data) {
+            //    model.add_parent_to_child(socket.request.session.id_user, data.pid, data.kid).then(function (resp) {
+            //      console.log('merge' + resp);
+            // }).catch(function (resp) {
 
-                });
+            // });
 
-            });
+            // });
             socket.on('register_kid', function (data) {
-                model.register_kid(socket.request.session.id_user,{
-                    username:data.username,
-                    password:data.password,
-                    first_name:data.first_name,
-                    last_name:data.last_name
+                model.register_kid(socket.request.session.id_user, {
+                    username: data.username,
+                    password: data.password,
+                    first_name: data.first_name,
+                    last_name: data.last_name
                 })
 
             });
 
             socket.on('add_static_target', function (data) {
                 //  data.radius = Math.floor(data.radius);
-                data.kid = Number.parseInt(data.kid);
-                data.kid = Number.parseInt(data.kid);
                 //  var validated = validate_static_target_input(data);
                 // console.log(validated);
 

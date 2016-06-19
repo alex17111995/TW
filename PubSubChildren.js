@@ -3,13 +3,11 @@
  */
 
 var poller = require('./controller/poller_listener');
-
+var promise=require('promise');
 
 var PubSubChildren = function (kid) {
-    this.handlers = [];
-    this.poller = new poller(this,kid);
-
-
+        this.handlers = [];
+        this.poller = new poller(this, kid);
 };
 
 PubSubChildren.prototype.subs = function (handler) {

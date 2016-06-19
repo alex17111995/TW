@@ -42,7 +42,7 @@ router.get('/', verifySession, function (req, res, next) {
         res.send(error.message);
     });
     */
-    res.sendFile(path.join(__dirname,'../public', 'index-1-6.html'));
+    res.sendFile(path.join(__dirname,'../public', 'index-1-14.html'));
    // res.render('index');
 
 });

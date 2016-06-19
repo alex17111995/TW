@@ -18,6 +18,7 @@ var getOptions = function (boundingBox) {
 
 
 var http = require('http');
+var incidents_model = require('../model/kid_incidents_model');
 
 
 var parse_incidents = function (json_bing) {
@@ -87,14 +88,23 @@ var poll_events = function (latitude, longitude) {
 
 
 };
+var stop_polling = function (poller_listener) {
+    poller_listener.stop_polling = true;
+};
 
-
+//TODO case going really far from poll location
 var start_polling = function (poller_listener) {
+    poller_listener.stop_polling = false;
     if (poller_listener.intervalID == undefined) {
         poller_listener.intervalID = setIntervalImmediate(function () {
                 poll_events(poller_listener.latitude, poller_listener.longitude).then(function (results) {
-
+                    if (poller_listener.stop_polling = true) {
+                        clearInterval(poller_listener.intervalID);
+                        poller_listener.intervalID = undefined;
+                        console.log('am oprit pollerul');
+                    }
                     if (poller_listener) {
+
                         poller_listener.channel_to_subscribe.publish({
                             'channel': 'incidents',
                             'data': {
@@ -103,6 +113,7 @@ var start_polling = function (poller_listener) {
                             }
 
                         });
+                        incidents_model.update_incidents(poller_listener.kid, results);
                         console.log(results);
                     }
                 }).catch(function (error) {
@@ -115,7 +126,6 @@ var start_polling = function (poller_listener) {
 
 
 var poller_listener = function (channelToPublish, kid) {
-    //TODO stop polling if child becomes_offline_for_some_time
     this.channel_to_subscribe = channelToPublish;
     this.kid = kid;
     this.handler = function (message) {
@@ -123,9 +133,12 @@ var poller_listener = function (channelToPublish, kid) {
         if (message.channel === 'new_child_location') {
             this.latitude = message.data.latitude;
             this.longitude = message.data.longitude;
-
             start_polling(this);
         }
+        if (message.channel === 'child_offline') {
+            stop_polling(this);
+        }
+
 
     }.bind(this);
     channelToPublish.subs(this.handler);
@@ -134,9 +147,9 @@ poller_listener.prototype.close = function () {
     if (this.intervalID != undefined) {
         clearInterval(this.intervalID);
     }
-        this.channel_to_subscribe.unsubscribe(this.handler);
-        this.handler=undefined;
-        this.channel_to_subscribe = undefined;
+    this.channel_to_subscribe.unsubscribe(this.handler);
+    this.handler = undefined;
+    this.channel_to_subscribe = undefined;
 };
 
 
