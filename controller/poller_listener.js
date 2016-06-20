@@ -5,6 +5,10 @@ var channels = require('../channels.js');
 var geometry_functions = require('../geometry_coordinates');
 var promise = require('promise');
 var util = require('util');
+
+var poller_map = new Map();
+
+
 var getOptions = function (boundingBox) {
     var path = util.format('/REST/v1/Traffic/Incidents/%d,%d,%d,%d',
             boundingBox.south, boundingBox.west, boundingBox.north, boundingBox.east)
@@ -126,34 +130,65 @@ var start_polling = function (poller_listener) {
 
 
 var poller_listener = function (channelToPublish, kid) {
-    this.channel_to_subscribe = channelToPublish;
-    this.kid = kid;
-    this.handler = function (message) {
+    set_handler(this,channelToPublish,kid);
+    poller_map.set(kid,this);
+};
+
+var set_handler = function (poller_listener, channelToPublish, kid) {
+    if (poller_listener.channel_to_subscribe != undefined) {
+        console.log('detected multiple channels for same kid');
+        throw new Error('detected multiple channels for same kid');
+
+    }
+    poller_listener.channel_to_subscribe = channelToPublish;
+    poller_listener.kid = kid;
+    poller_listener.handler = function (message) {
 
         if (message.channel === 'new_child_location') {
             this.latitude = message.data.latitude;
             this.longitude = message.data.longitude;
-            start_polling(this);
+            start_polling(poller_listener);
         }
         if (message.channel === 'child_offline') {
-            stop_polling(this);
+            stop_polling(poller_listener);
         }
 
 
-    }.bind(this);
-    channelToPublish.subs(this.handler);
+    };
+    channelToPublish.subs(poller_listener.handler);
+
 };
-poller_listener.prototype.close = function () {
-    if (this.intervalID != undefined) {
-        clearInterval(this.intervalID);
+var verify_instance_should_delete=function(poller){
+   if(poller.intervalID===undefined && poller.channel_to_subscribe===undefined){
+             poller_map.delete(poller.kid)
+        console.log('am sters instanta');
+   }
+
+};
+
+
+
+
+poller_listener.prototype.stop = function (handler) {
+    if (this.handler == handler) {
+        this.channel_to_subscribe.unsubscribe(this.handler);
+        this.handler = undefined;
+        this.channel_to_subscribe = undefined;
+        this.mark_to_delete_instance = true;
+        verify_instance_should_delete(poller);
     }
-    this.channel_to_subscribe.unsubscribe(this.handler);
-    this.handler = undefined;
-    this.channel_to_subscribe = undefined;
+
 };
 
 
-module.exports = poller_listener;
+
+
+
+module.exports = function(channel_to_subscribe,kid){
+    if(poller_map.get(kid)!=undefined){
+        return
+    }
+};
 
 
 //TODO alterRadius

@@ -13,12 +13,12 @@ var validate_static_target_input = function (data) {
 };
 
 var subscribe_child = function (kid, handler) {
-    var childChannel = PubSubFactory(channels.getChildChannelName(), kid);
+    var childChannel = PubSubFactory.create(channels.getChildChannelName(), kid);
     childChannel.subs(handler);
 
 };
 var unsubscribe_child = function (kid, handler) {
-    var childChannel = PubSubFactory(channels.getChildChannelName(), kid);
+    var childChannel = PubSubFactory.create(channels.getChildChannelName(), kid);
     childChannel.unsubscribe(handler);
 };
 
@@ -50,20 +50,20 @@ var subscribe_channels = function (socket, type_of_user, user_id) {
                     subscribed_children = subscribed_children.filter(function (element) {
                         return element != msg.data.kid;
                     });
-                    var childChannel = PubSubFactory(channels.getChildChannelName(), msg.data.kid);
+                    var childChannel = PubSubFactory.create(channels.getChildChannelName(), msg.data.kid);
                     childChannel.unsubscribe(on_publish_handler);
                     socket.emit('deleted_child', msg.data);
                 }
 
             };
 
-            var parent_administration = PubSubFactory(channels.getParentAdministrativeChannel(), user_id);
+            var parent_administration = PubSubFactory.create(channels.getParentAdministrativeChannel(), user_id);
             parent_administration.subs(administrative_handler);
             var model = new childHandlerModel();
             model.get_tracked_children_ids(user_id).then(function (children_ids) {
                 subscribed_children = children_ids;
                 for (var i = 0; i < children_ids.length; ++i) {
-                    var children_notifier = PubSubFactory(channels.getChildChannelName(), children_ids[i]);
+                    var children_notifier = PubSubFactory.create(channels.getChildChannelName(), children_ids[i]);
                     children_notifier.subs(on_publish_handler);
                 }
                 resolve([on_publish_handler, administrative_handler, subscribed_children]);
@@ -79,7 +79,7 @@ var subscribe_channels = function (socket, type_of_user, user_id) {
 
 
 var on_disconnect_unsubscribe_channels = function (handler, user_id) {
-    var parent_administration = PubSubFactory(channels.getParentAdministrativeChannel(), user_id);
+    var parent_administration = PubSubFactory.create(channels.getParentAdministrativeChannel(), user_id);
     parent_administration.unsubscribe(handler[1]);
     for (var i = 0; i < handler[2].length; i++) {
         unsubscribe_child(handler[2][i], handler[0]);

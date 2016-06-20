@@ -6,7 +6,7 @@ var PubSub = require('./PubSub');
 var childrenPubSub = require('./PubSubChildren');
 var channels = require('./Channels');
 
-var FactoryPubSub = function (type, id) {
+var create = function (type, id) {
 
     var mapOfType = map.get(type);
     if (mapOfType === undefined) {
@@ -30,5 +30,28 @@ var FactoryPubSub = function (type, id) {
     }
     return pubSubInstance;
 };
+var publish_if_existing = function (type, id, message) {
+    var mapOfType = map.get(type);
+    if (mapOfType == undefined)
+        return;
+    var pubSub = mapOfType.get(id);
+    if (pubSub) pubSub.publish(message);
+};
 
-module.exports = FactoryPubSub;
+var destroy = function (type, id) {
+    var mapOfType = map.get(type);
+    if (mapOfType != undefined) {
+        var instance = mapOfType.get(id);
+        mapOfType.delete(id);
+        if (instance != undefined)
+            instance.close();
+    }
+
+};
+
+
+module.exports = {
+    create: create,
+    publish_if_existing: publish_if_existing,
+    destroy: destroy
+};

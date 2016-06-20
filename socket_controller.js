@@ -19,7 +19,7 @@ var subscribe_channels = function (socket, type_of_user, user_id) {
         socket.emit('blabla', msg);
     };
     if (type_of_user == "kid") {
-        var childChannel = PubSubFactory(channels.getChildChannelName(), user_id);
+        var childChannel = PubSubFactory.create(channels.getChildChannelName(), user_id);
         childChannel.subs(on_publish_handler);
     }
 
@@ -29,7 +29,7 @@ var subscribe_channels = function (socket, type_of_user, user_id) {
 
 var on_disconnect_unsubscribe_channels = function (handler, type_of_user, user_id) {
     if (type_of_user == "kid") {
-        var childChannel = PubSubFactory(channels.getChildChannelName(), user_id);
+        var childChannel = PubSubFactory.create(channels.getChildChannelName(), user_id);
         childChannel.unsubscribe(handler);
     }
 

@@ -10,7 +10,7 @@ var oracledb = require('oracledb');
 var mapTimeouts = new Map();
 var geoFancing = require('./geo_fencing');
 var validations = require('./validations');
-var incidents=require('./kid_incidents_model');
+var incidents = require('./kid_incidents_model');
 
 var clearTimeoutId = function (kid) {
     if (mapTimeouts.get(kid) != undefined) {
@@ -31,7 +31,7 @@ var kidModel = function () {
 };
 
 
-var timeoutVALUE = 1000 * 60 * 1/4;
+var timeoutVALUE = 1000 * 60 * 1 / 4;
 var update_location = function (kid, latitude, longitude) {
     return new promise(function (resolve, reject) {
         oracleconnect.executeSQL('BEGIN update_location_child(:kid,:latitude,:longitude,:timestamp_out); END;', {
@@ -43,8 +43,7 @@ var update_location = function (kid, latitude, longitude) {
             }
 
         }).then(function (results) {
-                var notifier = PubSubFactory(channels.getChildChannelName(), kid);
-                notifier.publish({
+                PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid,{
                     channel: 'new_child_location',
                     data: {
                         'kid': kid,
@@ -74,7 +73,7 @@ kidModel.prototype.updateLocation = function (kid, information) {
         }
 
         update_location(kid, information['latitude'], information['longitude'], 1)
-            .then(function (results) {
+            .then(function () {
                 clearTimeoutId(kid);
                 var timeoutID = setTimeout(function () {
                     onOffline(kid, information['latitude'], information['longitude'])
@@ -138,15 +137,15 @@ kidModel.prototype.locationOfUserAndCredentials = function (connection, kid) {
 
 };
 
-var onOffline = function (kid, latitude, longitude) {
+var onOffline = function (kid) {
     mapTimeouts.delete(kid);
-    var notifier = PubSubFactory(channels.getChildChannelName(), kid);
-    notifier.publish({
-        channel: 'offline_child',
-        data: {
-            'kid': kid
-        }
-    });
+   PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid,
+        {
+            channel: 'offline_child',
+            data: {
+                'kid': kid
+            }
+        });
 };
 
 kidModel.prototype.static_targets_of_child = function (connection, kid) {
@@ -235,7 +234,7 @@ kidModel.prototype.get_dynamic_targets = function (connection, kid) {
             });
     });
 };
-kidModel.prototype.isOnline=isOnline;
+kidModel.prototype.isOnline = isOnline;
 
 kidModel.prototype.get_notifications = function (kid) {//
     return new promise(function (resolve, reject) {
@@ -244,15 +243,15 @@ kidModel.prototype.get_notifications = function (kid) {//
             var promise_static_targets = this.static_targets_of_child(connection, kid);
             var promise_handlers_of_child = this.get_handlers_of_child_and_access_request(connection, kid);
             var promise_dynamic_targets = this.get_dynamic_targets(connection, kid);
-            var promise_incidents= incidents.get_incidents(kid);
-            promise.all([promise_user_credentials, promise_static_targets, promise_handlers_of_child, promise_dynamic_targets,promise_incidents])
+            var promise_incidents = incidents.get_incidents(kid);
+            promise.all([promise_user_credentials, promise_static_targets, promise_handlers_of_child, promise_dynamic_targets, promise_incidents])
                 .then(function (array_results) {
                     resolve({
                         'kid_location_and_name': array_results[0],
                         'static_targets': array_results[1],
                         'child_handlers': array_results[2],
                         'dynamic_targets': array_results[3],
-                        'incidents':array_results[4]
+                        'incidents': array_results[4]
                     });
                     oracleconnect.releaseConnection(connection);
                 }).catch(function (error) {

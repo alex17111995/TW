@@ -27,27 +27,3 @@
     padding-right: 20px;
     padding-bottom: 20px;
 }
-
-.search-bar {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 25px;
-    z-index: 3;
-}
-
-.centerbox{
-    position: absolute;
-    left: 400px;
-    top: 400px;
-    height: 400px;
-    width: 300px;
-    overflow: hidden;
-    background-color: mediumaquamarine;
-}
-.centercard{
-    height: inherit;
-    width:inherit;
-    overflow:scroll;
-     padding-right: 15px;
-}

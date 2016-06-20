@@ -17,7 +17,7 @@ var registerParent = function (username, password, email,first_name,last_name) {
             first_name:first_name,
             last_name:last_name
 
-        }).then(function (result) {
+        }).then(function () {
             resolve();
         }).catch(function (err) {
             reject(err);

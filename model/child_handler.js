@@ -1,6 +1,7 @@
 /**
  * Created by Ciubi on 24/04/16.
  */
+
 var promise = require('promise');
 var delayedCallbacks = require('./delayedCallbacks');
 var object_location = require('./object_location');
@@ -24,8 +25,7 @@ var clearTimeoutId = function (kid) {
         mapTimeouts.delete(kid);
     }
 };
-const OUTSIDE_EMIT = 2;
-const INSIDE_EMIT = 1;
+
 
 var setTimeoutId = function (kid, timeout) {
     mapTimeouts.set(kid, timeout);
@@ -34,27 +34,6 @@ var setTimeoutId = function (kid, timeout) {
 
 //TODO REMAKE THIS
 
-var publish_new_location_on_tracked_children_pubsub = function (pid, latitude, longitude, timestamp) {
-    oracleConn.executeSQL('select kid from child_handlers where pid=:pid and is_dynamic_target is not null', {
-        pid: pid
-    }).then(function (results) {
-            for (var i = 0; i < results.rows.length; ++i) {
-                var notifier = PubSubFactory(channels.getChildChannelName(), results.rows[i]);
-                notifier.publish({
-                    channel: 'new_dynamic_target_location',
-                    data: {
-                        pid: pid,
-                        latitude: latitude,
-                        longitude: longitude,
-                        timestamp_last_update: timestamp
-                    }
-                });
-            }
-        })
-        .catch(function (error) {
-            console.log(error.message);
-        });
-};
 
 var children_of_dynamic_target = function (pid) {
     return new promise(function (resolve, reject) {
@@ -89,17 +68,18 @@ var update_location = function (pid, latitude, longitude) {
                 var array_children = results.outBinds.array_children;
 
                 for (var i = 0; i < array_children.length; ++i) {
-                    var notifierKid = PubSubFactory(channels.getChildChannelName(), array_children[i]);
-                    notifierKid.publish({
-                        channel: 'dynamic_target_new_location',
-                        'data': {
-                            kid: array_children[i],
-                            pid: pid,
-                            latitude: latitude,
-                            longitude: longitude,
-                            timestamp: results.outBinds.timestamp_out
-                        }
-                    });
+                    var notifierKid = PubSubFactory.publish_if_existing(channels.getChildChannelName(), array_children[i],
+                        {
+                            channel: 'dynamic_target_new_location',
+                            'data': {
+                                kid: array_children[i],
+                                pid: pid,
+                                latitude: latitude,
+                                longitude: longitude,
+                                timestamp: results.outBinds.timestamp_out
+                            }
+                        });
+
                     geoFancing(array_children[i]);
                 }
 
@@ -119,14 +99,14 @@ var onOffline = function (pid) {
     mapTimeouts.delete(pid);
     children_of_dynamic_target(pid).then(function (children) {
             for (var i = 0; i < children.length; ++i) {
-                var notifier = PubSubFactory(channels.getChildChannelName(), children[i]);
-                notifier.publish({
-                    channel: 'offline_dynamic_target',
-                    data: {
-                        'kid': children[i],
-                        'pid': pid
-                    }
-                })
+                PubSubFactory.publish_if_existing(channels.getChildChannelName(), children[i]
+                    , {
+                        channel: 'offline_dynamic_target',
+                        data: {
+                            'kid': children[i],
+                            'pid': pid
+                        }
+                    });
             }
         })
         .catch(function (error) {
@@ -287,12 +267,11 @@ child_handler.prototype.register_kid = function (pid, information) {
             })
             .then(function (result) {
                 resolve('OK');
-                var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid);
-                notifierParent.publish({
+                PubSubFactory.publish_if_existing(channels.getParentAdministrativeChannel(), pid
+                    , {
                         'channel': 'new_child',
                         'kid': result.outBinds.kid
-                    }
-                );
+                    });
 
             })
             .catch(function (error) {
@@ -424,22 +403,23 @@ child_handler.prototype.delete_parent_of_child = function (pid_granting_access, 
                     reject(new Error('no permission'));
                 }
                 else {
-                    var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_to_delete);
-                    var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
-                    notifierParent.publish({
+                    PubSubFactory.publish_if_existing(channels.getParentAdministrativeChannel()
+                        , pid_to_delete, {
                             'channel': 'deleted_child',
-                            data:{
+                            data: {
                                 'kid': kid
                             }
                         });
-                    notifierKid.publish({
-                        'channel': 'deleted_parent',
-                        'data': {
-                            kid: kid,
-                            'pid': pid_to_delete
+                    PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid
+                        , {
+                            'channel': 'deleted_parent',
+                            'data': {
+                                kid: kid,
+                                'pid': pid_to_delete
 
-                        }
-                    });
+                            }
+                        });
+
                     resolve(true);
 
                 }
@@ -461,14 +441,12 @@ child_handler.prototype.no_longer_dynamic_target = function (pid_with_kid_acces,
                     reject(new Error('no permission'));
                     return;
                 }
-                var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
-                notifierKid.publish({
+                PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid, {
                     channel: 'deleted_dynamic_target',
                     data: {
                         kid: kid,
                         pid: pid_with_kid_acces
                     }
-
                 });
             });
         geoFancing(kid);
@@ -503,21 +481,21 @@ child_handler.prototype.make_parent_dynamic_target = function (pid_with_kid_acce
                     })
                     .then(function (results) {
                         oracleConn.commit_and_close(connection).then(function () {
-                            var latitude,longitude,timestamp_last_update;
-                                var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
-                                if(results.rows.length==0){
-                                    latitude=undefined;
-                                    longitude=undefined;
-                                    timestamp_last_update=undefined;
-                                }
-                            else{
+                                var latitude, longitude, timestamp_last_update;
 
-                                    latitude=   results.rows[0][0];
-                                    longitude=    results.rows[0][1];
-                                    timestamp_last_update=results.rows[0][2];
+                                if (results.rows.length == 0) {
+                                    latitude = undefined;
+                                    longitude = undefined;
+                                    timestamp_last_update = undefined;
+                                }
+                                else {
+
+                                    latitude = results.rows[0][0];
+                                    longitude = results.rows[0][1];
+                                    timestamp_last_update = results.rows[0][2];
 
                                 }
-                                notifierKid.publish({
+                                PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid, {
                                     channel: 'new_dynamic_target',
                                     data: {
                                         kid: kid,
@@ -525,7 +503,7 @@ child_handler.prototype.make_parent_dynamic_target = function (pid_with_kid_acce
                                         latitude: latitude,
                                         longitude: longitude,
                                         is_online: thisInstance.isOnline(pid_with_kid_access),
-                                        timestamp_last_update:timestamp_last_update,
+                                        timestamp_last_update: timestamp_last_update,
                                         radius: radius
                                     }
                                 });
@@ -574,14 +552,11 @@ child_handler.prototype.add_parent_to_child = function (pid_to_add, kid) {
                         });
                     })
                     .then(function (results) {
-                        var notifierParent = PubSubFactory(channels.getParentAdministrativeChannel(), pid_to_add);
-                        var notifierKid = PubSubFactory(channels.getChildChannelName(), kid);
-                        notifierParent.publish({
-                                'channel': 'new_child',
-                                'kid': kid
-                            }
-                        );
-                        notifierKid.publish({
+                        PubSubFactory.publish_if_existing(channels.getParentAdministrativeChannel(), pid_to_add, {
+                            'channel': 'new_child',
+                            'kid': kid
+                        });
+                        PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid, {
                             'channel': 'new_parent',
                             'data': {
                                 kid: kid,
@@ -612,14 +587,6 @@ child_handler.prototype.add_parent_to_child = function (pid_to_add, kid) {
 };
 
 
-var publish_alert_if_necessary = function (kid, geo_fencing) {
-    var notifier = PubSubFactory(channels.getChildChannelName(), kid);
-    if (geo_fencing != 0) {
-        notifierFunctions.emit_geo_alert(kid, geo_fencing);
-    }
-};
-
-
 child_handler.prototype.add_static_target = function (pid, kid, longitude, latitude, radius) {
     return new promise(function (resolve, reject) {
         var static_target_id = 0;
@@ -638,9 +605,7 @@ child_handler.prototype.add_static_target = function (pid, kid, longitude, latit
             })
             .then(function (results) {
                 static_target_id = results.outBinds.id_static;
-                var notifier = PubSubFactory(channels.getChildChannelName(), kid);
-
-                notifier.publish({
+                var notifier = PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid, {
                     channel: 'new_static_target',
                     data: {
                         'kid': kid,
@@ -650,6 +615,7 @@ child_handler.prototype.add_static_target = function (pid, kid, longitude, latit
                         'static_target_id': static_target_id
                     }
                 });
+
                 geoFancing(kid);
                 resolve({
                     'kid': kid,
@@ -675,18 +641,18 @@ child_handler.prototype.delete_static_target = function (pid, static_id) {
         oracleConn.executeSQL('BEGIN pack_kid_restrictions.delete_static_restriction(:pid,:static_id,:kid) ;END;', {
             pid: pid,
             static_id: static_id,
-            kid: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT},
+            kid: {type: oracledb.NUMBER, dir: oracledb.BIND_OUT}
 
         }).then(function (results) {
 
-                var notifier = PubSubFactory(channels.getChildChannelName(), results.outBinds.kid);
-                notifier.publish({
+                var notifier = PubSubFactory.publish_if_existing(channels.getChildChannelName(), results.outBinds.kid, {
                     channel: 'deleted_static_target',
                     data: {
                         static_id: static_id,
                         kid: results.outBinds.kid
                     }
                 });
+
                 geoFancing(results.outBinds.kid);
                 resolve({
                     static_id: static_id,

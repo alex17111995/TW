@@ -9,14 +9,14 @@ module.exports =
 {
     emit_geo_alert: function (kid, alertType) {
         if (typeof kid == 'number') {
-            var child_notifier = PubSubFactory(channels.getChildChannelName(), kid);
-            child_notifier.publish({
-                'channel': 'alert_geofencing',
-                data: {
-                    'alert_type': alertType,
-                    'kid': kid
-                }
-            });
+            PubSubFactory.publish_if_existing(channels.getChildChannelName(), kid
+                , {
+                    'channel': 'alert_geofencing',
+                    data: {
+                        'alert_type': alertType,
+                        'kid': kid
+                    }
+                });
         }
     }
 };

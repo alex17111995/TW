@@ -80,23 +80,27 @@
 
 .kid-card {
     width: 220px;
-    height: 88px;
+    max-height: 88px;
     align-self: center;
     background-color: whitesmoke;
     overflow: hidden;
-    transition-delay: height 1s;
+    -webkit-transition: max-height 2s ease-in-out;
+    -moz-transition: max-height 2s ease-in-out;
+    -o-transition: max-height 2s ease-in-out;
+    -ms-transition: max-height 2s ease-in-out;
+    transition: max-height 2s ease-in-out;
     margin-bottom: 20px;
 }
 
 .kid-card:hover {
-    height: auto;
+    max-height: 5000px;
 }
 
 .handler-menu-button {
     width: 80px;
 }
 
-.handler-button{
+.handler-button {
     width: 165px;
 }
 
@@ -164,16 +168,20 @@
 
 .userMenu {
     width: 240px;
-    height: 45px;
+    max-height: 45px;
     align-self: center;
     background-color: whitesmoke;
     overflow: hidden;
-    transition-delay: height 1s;
+    -webkit-transition: max-height 0.5s ease-in-out;
+    -moz-transition: max-height 0.5s ease-in-out;
+    -o-transition: max-height 0.5s ease-in-out;
+    -ms-transition: max-height 0.5s ease-in-out;
+    transition: max-height 0.5s ease-in-out;
     margin-bottom: 20px;
 }
 
 .userMenu:hover {
-    height: auto;
+    max-height: 500px;
 }
 
 .userMenu-button {
@@ -182,7 +190,7 @@
     margin: 5px;
 }
 
-.userMenu-halfButton{
+.userMenu-halfButton {
     height: 45px;
     width: 105px;
     margin-bottom: 5px;
@@ -201,18 +209,19 @@
     z-index: 0;
     border-radius: 5px;
 }
-.mdl-button{
+
+.mdl-button {
     text-transform: none;
 }
 
-.mdl-list__item{
-    padding:8px;
+.mdl-list__item {
+    padding: 8px;
     padding-top: 0px;
     padding-left: 0px;
 }
 
-.mdl-list{
-    margin:0px;
+.mdl-list {
+    margin: 0px;
     margin-bottom: 5px;
     padding: 0px;
 }
@@ -270,6 +279,10 @@
     width: 150px;
 }
 
+#map{
+    height: 100%;
+    width:100%;
+}
 #newKidHelp {
     width: auto;
     height: auto;

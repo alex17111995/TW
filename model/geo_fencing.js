@@ -6,8 +6,8 @@ var mapLastGeoFance = new Map();
 var geometryFunctions = require('../geometry_coordinates');
 var notifierFunctions = require('../notifier_functions');
 var is_inside_any_target = function (static_targets, dynamic_targets, childLatitudeAndLongitude) {
-    var inside_any = false;
-    inside_any = geometryFunctions.isInPermittedLocation(childLatitudeAndLongitude, static_targets);
+
+    var inside_any = geometryFunctions.isInPermittedLocation(childLatitudeAndLongitude, static_targets);
     if (inside_any)
         return inside_any;
     var filtered_dynamic_targets = dynamic_targets.filter(function (element) {
