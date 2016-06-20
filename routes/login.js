@@ -5,6 +5,8 @@ var express = require('express');
 var authenticate = require('../model/authenticate');
 var register = require('../model/registerParent');
 var router = express.Router();
+var path= require('path');
+
 /* GET users listing. */
 var verifyAlreadyLogged = function (req, res, next) {
     if (req.session.isLogged == true) {
@@ -15,11 +17,12 @@ var verifyAlreadyLogged = function (req, res, next) {
 };
 
 router.get('/', verifyAlreadyLogged, function (req, res, next) {
-    res.render('login', {title: 'Login'});
+   // res.render('login', {title: 'Login'});
+    res.sendFile(path.join(__dirname,'../public', 'login.html'));
 });
 
 router.post('/', verifyAlreadyLogged, function (req, res, next) {
-    //TODO checkDB
+
 
     var type = 'parent';
     if (req.body.isChild == 'on') {
@@ -52,7 +55,8 @@ router.post('/', verifyAlreadyLogged, function (req, res, next) {
 
 
 router.get('/register', verifyAlreadyLogged, function (req, res, next) {
-    res.render('register', {title: 'Register'});
+   // res.render('register', {title: 'Register'});
+
 });
 router.post('/register', verifyAlreadyLogged, function (req, res, next) {
     register(req.body.username, req.body.password, req.body.email, req.body.first_name, req.body.last_name)

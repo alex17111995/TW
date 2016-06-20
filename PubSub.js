@@ -1,8 +1,9 @@
 /**
  * Created by Ciubi on 27/03/16.
  */
-var PubSub = function () {
-
+var PubSub = function (type,id) {
+    this.type=type;
+    this.id=id;
     this.handlers = [];
 };
 
@@ -20,9 +21,14 @@ PubSub.prototype.unsubscribe= function(handler){
     for(var i=0;i<this.handlers.length;i++){
         if(handler==this.handlers[i])
             this.handlers.splice(i,1);
+        if(this.handlers.length===0){
+            var factory=require('./FactoryPubSub');
+            factory.destroy(this.type,this.id);
+        }
     }
 };
 PubSub.prototype.close = function () {
+    console.log('sunt parinte si ma inchid');
     this.handlers=[];
 };
 

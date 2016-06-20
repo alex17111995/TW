@@ -51,11 +51,14 @@ var socket_controller = function (socket) {
     if (socket.request.session.type == "kid") {
         model = new kidModel();
     }
-
+    socket.disconnect('todo');
+    return;
     var publish_handler_id = subscribe_channels(socket, socket.request.session.type, socket.request.session.id_user);
     socket.on('disconnect', function () {
-        on_disconnect_unsubscribe_channels(publish_handler_id, socket.request.session.type, socket.request.session.id_user);
+        console.log('m-am deconectat sefu');
+     //   on_disconnect_unsubscribe_channels(publish_handler_id, socket.request.session.type, socket.request.session.id_user);
     });
+
 
     model.get_notifications(socket.request.session.id_user).then(function (initial_events) {
         socket.emit('initial_object', initial_events);

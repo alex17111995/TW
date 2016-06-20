@@ -24,7 +24,7 @@ var toRadians = function (degree) {
 };
 var fromRadians = function (radians) {
     return radians * 180 / Math.PI;
-};
+}
 
 var MIN_LAT = toRadians(-90.0);  // -PI/2
 var  MAX_LAT = toRadians(90);   //  PI/2

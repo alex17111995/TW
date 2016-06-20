@@ -31,7 +31,7 @@ var kidModel = function () {
 };
 
 
-var timeoutVALUE = 1000 * 60 * 1 / 4;
+var timeoutVALUE = 1000 * 60 * 1 *10;
 var update_location = function (kid, latitude, longitude) {
     return new promise(function (resolve, reject) {
         oracleconnect.executeSQL('BEGIN update_location_child(:kid,:latitude,:longitude,:timestamp_out); END;', {

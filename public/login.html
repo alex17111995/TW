@@ -8,9 +8,55 @@
     <link rel="stylesheet" href="layout.css">
     <link rel="stylesheet" href="components.css">
     <script>
+        function showInitialMenu() {
+            var initialMenuCode = "";
+            initialMenuCode += "<button class=\"landing-page-button mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp\" style=\"width: 90%;\" onclick =\"showParentRegistrationMenu()\">Parent Registration</button><br/>";
+            initialMenuCode += "<button class=\"landing-page-button mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp\" style=\"top:10vh;width:40%;font-size:4vh\" onclick= \"showParentLoginMenu()\">Parent Login</button>";
+            initialMenuCode += " <button class=\"landing-page-button mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp\" style=\"top:10vh;width:40%;margin-left:10%;font-size:4vh\" onclick= \"showChildLoginMenu()\">Child Login</button>";
 
+            document.getElementById("content").innerHTML = initialMenuCode;
+            componentHandler.upgradeDom();
+        }
 
-       
+        function showParentLoginMenu() {
+            var pRegMenuCode = "";
+            pRegMenuCode += "<form method =\"post\"><div style=\"position:relative;width: 30vw;height: 10vh;left: 50px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"text\" id=\"usernameField\" required><label class=\"mdl-textfield__label\" for=\"usernameField\">username</label></div></div>";
+            pRegMenuCode +=" <input type=\"checkbox\" name=\"type\" value=\"0\" checked style = \"visibility:hidden\"> "
+            pRegMenuCode += "<div style=\"position:relative;width: 30vw;height: 10vh;left: 50px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"password\" id=\"passwordField\" required><label class=\"mdl-textfield__label\" for=\"usernameField\">password</label></div></div>";
+            pRegMenuCode += "<img src=\"https://cdn1.iconfinder.com/data/icons/logotypes/32/square-facebook-128.png\" alt=\"facebook_icon\" height=\"60px\" width=\"60px\" onclick = \"window.location='/facebook/login';\" style = \"position:absolute;right:50px;bottom:200px;\">";
+            pRegMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" style=\"position:relative;width: 200px;height: 10vh;left: 50px;\" onclick=\"showInitialMenu()\"><i class=\"material-icons\">close</i></button>";
+            pRegMenuCode += "<button type = \"submit\" class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\" style=\"position:absolute;width: 200px;height: 10vh;right: 50px;\" onclick=\"showInitialMenu();\">Login</button></form>";
+            document.getElementById("content").innerHTML = pRegMenuCode;
+            componentHandler.upgradeDom();
+        }
+
+        function showChildLoginMenu() {
+            var cRegMenuCode = "";
+            cRegMenuCode += "<form method =\"post\"><div style=\"position:relative;width: 30vw;height: 10vh;left: 5vw\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"text\" id=\"usernameField\" required><label class=\"mdl-textfield__label\" for=\"usernameField\">Username</label></div></div>";
+            cRegMenuCode +=" <input type=\"checkbox\" name=\"type\" value=\"1\" checked style = \"visibility:hidden\"> "
+            cRegMenuCode += "<div style=\"position:relative;width: 30vw;height: 10vh;left: 5vw\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"password\" id=\"passwordField\" required><label class=\"mdl-textfield__label\" for=\"usernameField\">Password</label></div></div>";
+            cRegMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" style=\"position:relative;width: 10vw;height: 10vh;left: 5vw;\" onclick=\"showInitialMenu()\"><i class=\"material-icons\">close</i></button>";
+            cRegMenuCode += "<button type = \"submit\"  class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\" style=\"position:absolute;width: 10vw;height: 10vh;right: 5vw;\" onclick=\"showInitialMenu();\">Login</button></form>";
+
+            document.getElementById("content").innerHTML = cRegMenuCode;
+            componentHandler.upgradeDom();
+
+        }
+
+        function showParentRegistrationMenu() {
+            var pRegMenuCode = "";
+
+            pRegMenuCode += "<form method = \"post\"><div style=\"width: 15vw;height: 50px;position: absolute;left: 50px;bottom:260px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"text\" id=\"usernameField\" required><label class=\"mdl-textfield__label\" for=\"usernameField\"> Username</label></div></div>";
+            pRegMenuCode += "<div style=\"width: 15vw;height: 50px;position: absolute;left: 50px;bottom:190px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"password\" id=\"passwordField\" required><label class=\"mdl-textfield__label\" for=\"passwordField\">Password</label></div></div>";
+            pRegMenuCode += "<div style=\"width: 15vw;height: 50px;position: absolute;left: 50px;bottom:120px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"text\" id=\"emailField\" required><label class=\"mdl-textfield__label\" for=\"emailField\">e-mail address</label></div></div>";
+            pRegMenuCode += "<div style=\"width: 15vw;height: 50px;position: absolute;left: 50px;bottom:50px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"text\" id=\"firstNameField\" required><label class=\"mdl-textfield__label\" for=\"firstNameField\"> First Name</label></div></div>";
+            pRegMenuCode += "<div style=\"width: 15vw;px;height: 50px;position: absolute;right: 50px;bottom: 50px;\"><div class=\"mdl-textfield mdl-js-textfield mdl-textfield--floating-label\"><input class=\"mdl-textfield__input\" type=\"text\" id=\"lastNameField\" required><label class=\"mdl-textfield__label\" for=\"lastNameField\">Last Name</label></div></div>";
+            pRegMenuCode += "<button type=\"submit\" class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary\" style=\"width:150px;height:150px;position: absolute; bottom: 120px;right:120px; font-size: 3vh;\" onclick=\"sendInput();showInitialMenu();\">Register</button>";
+            pRegMenuCode += "<button class=\"mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent\" style=\"width:50px;height:150px;position: absolute; bottom: 120px;right:50px; font-size: 3vh;\" onclick=\"showInitialMenu()\"><i class=\"material-icons\">close</i></button></form>";
+            document.getElementById("content").innerHTML = pRegMenuCode;
+            componentHandler.upgradeDom();
+
+        }
     </script>
 
 
@@ -19,79 +65,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
+
+
 </head>
 
-<body background="login-register-bg.jpg">
-    
-    <div id="pageName"> <h2> - Kid Observer</h2></div>
-    
-    <div id="registrationArea" style="z-index:5;visibility:hidden;">
-        <div id="registerWindow" class="mdl-shadow--16dp">
-            <h3><span style="color:dodgerblue;position: relative;top: 15px;left: 110px;z-index:15;">Parent registration</span></h3>
-            <div style="position:absolute; top: 20px;left: 105px;height: 340px;width:290px;background-color:ghostwhite;" class="mdl-shadow--16dp"></div>
-            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="usernameField" required>
-                    <label class="mdl-textfield__label" for="usernameField">Username</label>
+<body background="login-register-bg.jpg" onload="showInitialMenu()">
+    <div id="ModeSelectorArea">
+        <div id="backdrop" class="mdl-shadow--16dp">
+            <div id="modeSelectionArea" class="mdl-shadow--16dp">
+                <img src="logo.png" style="display:block;margin-left: auto;margin-right:auto;padding-top:50px;height:20vh;">
+                <div id="content">
                 </div>
             </div>
-            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="password" id="passwordField" required>
-                    <label class="mdl-textfield__label" for="passwordField">Password</label>
-                </div>
-            </div>
-            <div style="width: 120px;height: 50px;overflow:hidden;position: relative;left: 125px;">
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="firstNameField" required>
-                    <label class="mdl-textfield__label" for="firstNameField">First Name</label>
-                </div>
-            </div>
-            <div style="width: 120px;height: 50px;position: absolute;top:188px;right: 125px;">
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="lastNameField" required>
-                    <label class="mdl-textfield__label" for="lastNameField">Last Name</label>
-                </div>
-            </div>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="width:150px;height:50px;position: absolute; top: 300px;left:135px;" onclick="sendInput();closeKidRegisterWindow()">Register</button>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" style="width:50px;height:50px;position: absolute; top: 300px;left:300px;" onclick="closeKidRegisterWindow()"><i class="material-icons">close</i></button>
         </div>
     </div>
-    
-    
-    <div id="loginArea" style="z-index:0;visibility:hidden;">
-        <div id="loginWindow">
-            <h3><span style="color:dodgerblue;position: relative;top: 15px;left: 200px;z-index:15;">Login</span></h3>
-            <div style="position:absolute; top: 20px;left: 105px;height: 340px;width:290px;background-color:ghostwhite;" class="mdl-shadow--16dp"></div>
-            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;left: 125px;">
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="text" id="usernameField">
-                    <label class="mdl-textfield__label" for="usernameField">Username</label>
-                </div>
-            </div>
-            <div style="width: 250px;height: 50px;overflow:hidden;position: relative;top:25px;left: 125px;">
-                <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                    <input class="mdl-textfield__input" type="password" id="passwordField">
-                    <label class="mdl-textfield__label" for="passwordField">Password</label>
-                </div>
-            </div>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" style="width:50px;height:50px;position: absolute; top: 300px;left:125px;" onclick="closeKidRegisterWindow()"><i class="material-icons">keyboard_backspace</i></button>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary" style="width:150px;height:50px;position: absolute; top: 300px;left:225px;" onclick="sendInput();closeKidRegisterWindow()">Login</button>
-        </div>
-    </div>
-    
-    
-    <div id="ModeSelectorArea" style="visibility:visible;">
-        <div id="modeSelectorWindow">
-            <h3><span style="color:dodgerblue;position: relative;top: 15px;left: 210px;z-index:15;">Kido</span></h3>
-            <div style="position:absolute; top: 20px;left: 105px;height: 340px;width:290px;background-color:ghostwhite;" class="mdl-shadow--16dp"></div>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp" style="width:260px;height:80px;font-size:18px;position: relative; left: 120px;top: 30px;">Parent Registration</button><br/>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp" style="width:120px;height:80px;font-size:18px;position: relative; left: 120px;top: 70px;">Parent Login</button>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--primary mdl-shadow--16dp" style="width:120px;height:80px;font-size:18px;position: relative; left: 135px;top: 70px;">Child Login</button>
-        </div>
-    </div>
-    
-
 </body>
 
 </html>

@@ -19,11 +19,11 @@ var create = function (type, id) {
         switch (type) {
             case channels.getChildChannelName():
             {
-                pubSubInstance = new childrenPubSub(id);
+                pubSubInstance = new childrenPubSub(type,id);
                 break;
             }
             default:
-                pubSubInstance = new PubSub();
+                pubSubInstance = new PubSub(type,id);
         }
         mapOfType.set(id, pubSubInstance);
         return pubSubInstance;
@@ -39,6 +39,7 @@ var publish_if_existing = function (type, id, message) {
 };
 
 var destroy = function (type, id) {
+    console.log('distrug ' + type + ' '+id);
     var mapOfType = map.get(type);
     if (mapOfType != undefined) {
         var instance = mapOfType.get(id);

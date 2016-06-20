@@ -76,6 +76,7 @@ var request_promise = function (options) {
 };
 
 
+
 var poll_events = function (latitude, longitude) {
     return new promise(function (resolve, reject) {
         var bounding_box = geometry_functions.boundingBox(latitude, longitude, 10);
@@ -92,6 +93,7 @@ var poll_events = function (latitude, longitude) {
 
 
 };
+
 var stop_polling = function (poller_listener) {
     poller_listener.stop_polling = true;
 };
@@ -102,12 +104,13 @@ var start_polling = function (poller_listener) {
     if (poller_listener.intervalID == undefined) {
         poller_listener.intervalID = setIntervalImmediate(function () {
                 poll_events(poller_listener.latitude, poller_listener.longitude).then(function (results) {
-                    if (poller_listener.stop_polling = true) {
+                    if (poller_listener.stop_polling == true||poller_listener.mark_to_delete_instance) {
                         clearInterval(poller_listener.intervalID);
                         poller_listener.intervalID = undefined;
                         console.log('am oprit pollerul');
+                        verify_instance_should_delete(poller_listener);
                     }
-                    if (poller_listener) {
+                    if (poller_listener.channel_to_subscribe) {
 
                         poller_listener.channel_to_subscribe.publish({
                             'channel': 'incidents',
@@ -124,14 +127,14 @@ var start_polling = function (poller_listener) {
                     console.log(error);
                 })
             }
-            , 300000)
+            , 1000*60*1/4)
     }
 };
 
 
 var poller_listener = function (channelToPublish, kid) {
-    set_handler(this,channelToPublish,kid);
-    poller_map.set(kid,this);
+    set_handler(this, channelToPublish, kid);
+    poller_map.set(kid, this);
 };
 
 var set_handler = function (poller_listener, channelToPublish, kid) {
@@ -142,31 +145,15 @@ var set_handler = function (poller_listener, channelToPublish, kid) {
     }
     poller_listener.channel_to_subscribe = channelToPublish;
     poller_listener.kid = kid;
-    poller_listener.handler = function (message) {
-
-        if (message.channel === 'new_child_location') {
-            this.latitude = message.data.latitude;
-            this.longitude = message.data.longitude;
-            start_polling(poller_listener);
-        }
-        if (message.channel === 'child_offline') {
-            stop_polling(poller_listener);
-        }
-
-
-    };
-    channelToPublish.subs(poller_listener.handler);
 
 };
-var verify_instance_should_delete=function(poller){
-   if(poller.intervalID===undefined && poller.channel_to_subscribe===undefined){
-             poller_map.delete(poller.kid)
+var verify_instance_should_delete = function (poller) {
+    if (poller.intervalID === undefined && poller.channel_to_subscribe === undefined) {
+        poller_map.delete(poller.kid);
         console.log('am sters instanta');
-   }
+    }
 
 };
-
-
 
 
 poller_listener.prototype.stop = function (handler) {
@@ -175,23 +162,34 @@ poller_listener.prototype.stop = function (handler) {
         this.handler = undefined;
         this.channel_to_subscribe = undefined;
         this.mark_to_delete_instance = true;
-        verify_instance_should_delete(poller);
+        verify_instance_should_delete(this);
     }
 
 };
+poller_listener.prototype.event_handle=function(message){
 
 
+        if (message.channel === 'new_child_location') {
+            this.latitude = message.data.latitude;
+            this.longitude = message.data.longitude;
+            start_polling(this);
+        }
+        if (message.channel === 'offline_child') {
+            stop_polling(poller_listener);
+        }
+};
 
-
-
-module.exports = function(channel_to_subscribe,kid){
-    if(poller_map.get(kid)!=undefined){
-        return
+module.exports = function (channel_to_subscribe, kid) {
+    if (poller_map.get(kid) != undefined) {
+        var poller = poller_map.get(kid);
+        set_handler(poller, channel_to_subscribe, kid);
+        return poller;
     }
+    poller = new poller_listener(channel_to_subscribe, kid);
+    return poller
 };
 
 
-//TODO alterRadius
 
 
 

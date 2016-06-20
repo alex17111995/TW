@@ -289,27 +289,34 @@ child_handler.prototype.kids_nearby = function (pid, kid) {
             .then(function (connection) {
                 verify_rights(connection, pid, kid)
                     .then(function () {
-                        return oracleConn.execute_query_connection(connection, 'select latitude,longitude from child_location' +
-                            'where kid=:kid and is_online=1', {kid: kid}, {autoCommit: true})
+                        return oracleConn.execute_query_connection(connection, 'select latitude,longitude from children_location ' +
+                            'where kid=:kid', {kid: kid}, {autoCommit: true})
                     })
                     .then(function (result) {
-                        if (result.rows.length == 0) {
-                            reject(new Error('kid is offline'))
+                        var kid_instance = new kidModel();
+                        if (result.rows.length == 0 || kid_instance.isOnline(kid) == 0) {
+                            throw new Error('kid is offline');
+
                         }
                         return oracleConn.execute_query_connection(connection, 'select kid,username,firstname,lastname from children' +
-                            ' natural join children_location where distance(:latitude,:longitude,latitude,longitude)<100 ' +
-                            'and is_online=1', {
-                            latitude: result.rows[0],
-                            longitude: result.rows[1]
+                            ' natural join children_location where distance(:latitude,:longitude,latitude,longitude)<100 and kid!=:kid', {
+                            latitude: result.rows[0][0],
+                            longitude: result.rows[0][1],
+                            kid: kid
                         }, {autoCommit: true});
                     }).then(function (kid_username_first_name_lastName) {
                         var array_object = [];
+                        var kid_instance = new kidModel();
+
+
                         for (var i = 0; i < kid_username_first_name_lastName.rows.length; ++i) {
+                            if (!kid_instance.isOnline(kid_username_first_name_lastName.rows[i][0]))
+                                continue;
                             array_object.push({
-                                kid: kid_username_first_name_lastName[i][0],
-                                username: kid_username_first_name_lastName[i][1],
-                                first_name: kid_username_first_name_lastName[i][2],
-                                last_name: kid_username_first_name_lastName[i][3]
+                                kid: kid_username_first_name_lastName.rows[i][0],
+                                username: kid_username_first_name_lastName.rows[i][1],
+                                first_name: kid_username_first_name_lastName.rows[i][2],
+                                last_name: kid_username_first_name_lastName.rows[i][3]
                             });
                         }
                         resolve(array_object);

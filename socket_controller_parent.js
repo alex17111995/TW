@@ -100,7 +100,6 @@ var socket_controller = function (socket) {
         socket.disconnect('invalid session');
         return;
     }
-
     subscribe_channels(socket, socket.request.session.type, socket.request.session.id_user).then(function (handlerID) {
             socket.on('disconnect', function () {
                 on_disconnect_unsubscribe_channels(handlerID, socket.request.session.id_user);
@@ -156,6 +155,15 @@ var socket_controller = function (socket) {
                     last_name: data.last_name
                 })
 
+            });
+            socket.on('nearby_kids', function (data) {
+                model.kids_nearby(socket.request.session.id_user,data)
+                .then(function(array_results){
+                   socket.emit('nearby_kids',{kid:data,friends:array_results});
+                })
+                .catch(function(error){
+                    socket.emit('error_message',{error:error.message});
+                });
             });
 
             socket.on('add_static_target', function (data) {
