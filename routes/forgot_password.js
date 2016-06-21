@@ -28,11 +28,11 @@ router.post('/', function (req, res, next) {
                     res.send("Mail sent to " + email);
                 })
                 .catch(function (error) {
-                    res.send(error);
+                    res.send(error.message);
                 })
         })
         .catch(function (error) {
-            res.send(error);
+            res.send(error.message);
         });
 });
 

@@ -1,35 +1,11 @@
 html
     body
-        script(src='/socket.io/socket.io.js')
-        script(src='http://code.jquery.com/jquery-1.11.1.js')
-        script.
-            var socket = io();
-            socket.emit('add_static_target', {
-                'kid': 1,
-                'latitude': 20,
-                'longitude': 20,
-                'radius': 10
-            });
-            socket.on('initial_object', function (data) {
-                console.log(data);
-            });
-            socket.on('error', function (data) {
-                console.log(data);
-            });
-            socket.on('new_child_location', function (data) {
-                console.log(data);
-            });
-            socket.on('blabla',function(data){
-               console.log(data);
-            });
-
-            socket.on('deleted_static_target',function(data){
-               console.log(data);
-            });
-            socket.on('new_static_target', function (data) {
-                console.log(data);
-                socket.emit('delete_static_target',{
-                    kid:data.kid,
-                    static_target_id:data.static_target_id
-                });
-            });
+        extends layout
+        block content
+            h1= title
+            form(name="add-estimation", method="post",action="generate-kid-code")
+                div.actions
+                    input(type="submit", value="generate-kid-code")
+            form(name="add-estimation", method="post",action="logout")
+                div.actions
+                    input(type="submit", value="sign out")

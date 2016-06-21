@@ -35,9 +35,9 @@ sio.use(function (socket, next) {
 sio.sockets.on("connection", socket_controller);
 
 oracleDB.initializeDB({
-    user: "student",
-    password: "student",
-    connectString: "192.168.1.69:1521/XE"
+    user: "student1",
+    password: "student1",
+    connectString: "192.168.43.3:1521/XE"
 }).then(function (pool) {
     // oracleDB.execute_SQL_leave_connection('select * from blabla').then(function(results))
     server.listen(port);

@@ -5,7 +5,7 @@ var channels = require('../channels.js');
 var geometry_functions = require('../geometry_coordinates');
 var promise = require('promise');
 var util = require('util');
-
+var PubSubFactory = require('../FactoryPubSub');
 var poller_map = new Map();
 
 
@@ -76,7 +76,6 @@ var request_promise = function (options) {
 };
 
 
-
 var poll_events = function (latitude, longitude) {
     return new promise(function (resolve, reject) {
         var bounding_box = geometry_functions.boundingBox(latitude, longitude, 10);
@@ -94,99 +93,72 @@ var poll_events = function (latitude, longitude) {
 
 };
 
-var stop_polling = function (poller_listener) {
-    poller_listener.stop_polling = true;
+
+var poller_listener = function (kid) {
+    this.kid = kid;
+
 };
 
-//TODO case going really far from poll location
-var start_polling = function (poller_listener) {
-    poller_listener.stop_polling = false;
-    if (poller_listener.intervalID == undefined) {
-        poller_listener.intervalID = setIntervalImmediate(function () {
-                poll_events(poller_listener.latitude, poller_listener.longitude).then(function (results) {
-                    if (poller_listener.stop_polling == true||poller_listener.mark_to_delete_instance) {
-                        clearInterval(poller_listener.intervalID);
+poller_listener.prototype.newLocation = function (latitude, longitude) {
+    var poller=this;
+    this.latitude=latitude;
+    this.longitude=longitude;
+    this.stop_polling = false;
+    if (poller.intervalID == undefined) {
+        poller.intervalID = setIntervalImmediate(function () {
+                poll_events(poller.latitude, poller.longitude).then(function (results) {
+                    if (poller.stop_polling == true) {
+                        clearInterval(poller.intervalID);
                         poller_listener.intervalID = undefined;
                         console.log('am oprit pollerul');
-                        verify_instance_should_delete(poller_listener);
+                        results = []; //golim datele noi deoarece copilul e offline
+                        poller_map.delete(poller.kid);
                     }
-                    if (poller_listener.channel_to_subscribe) {
-
-                        poller_listener.channel_to_subscribe.publish({
-                            'channel': 'incidents',
-                            'data': {
-                                events: results,
-                                kid: poller_listener.kid
-                            }
-
-                        });
-                        incidents_model.update_incidents(poller_listener.kid, results);
-                        console.log(results);
-                    }
+                    PubSubFactory.publish_if_existing(channels.getChildChannelName(),poller.kid,{
+                        'channel': 'incidents',
+                        'data': {
+                            events: results,
+                            kid: poller.kid
+                        }
+                    });
+                    incidents_model.update_incidents(poller.kid, results);
+                    console.log(results);
                 }).catch(function (error) {
                     console.log(error);
                 })
             }
-            , 1000*60*1/4)
-    }
-};
-
-
-var poller_listener = function (channelToPublish, kid) {
-    set_handler(this, channelToPublish, kid);
-    poller_map.set(kid, this);
-};
-
-var set_handler = function (poller_listener, channelToPublish, kid) {
-    if (poller_listener.channel_to_subscribe != undefined) {
-        console.log('detected multiple channels for same kid');
-        throw new Error('detected multiple channels for same kid');
-
-    }
-    poller_listener.channel_to_subscribe = channelToPublish;
-    poller_listener.kid = kid;
-
-};
-var verify_instance_should_delete = function (poller) {
-    if (poller.intervalID === undefined && poller.channel_to_subscribe === undefined) {
-        poller_map.delete(poller.kid);
-        console.log('am sters instanta');
+            , 1000 * 60 * 5)
     }
 
 };
-
-
-poller_listener.prototype.stop = function (handler) {
-    if (this.handler == handler) {
-        this.channel_to_subscribe.unsubscribe(this.handler);
-        this.handler = undefined;
-        this.channel_to_subscribe = undefined;
-        this.mark_to_delete_instance = true;
-        verify_instance_should_delete(this);
-    }
+poller_listener.prototype.offline = function () {
+    this.stop_polling = true;
+    console.log('opresc pollerul');
 
 };
-poller_listener.prototype.event_handle=function(message){
 
+var get_instance = function (kid) {
+    var poller_instance = poller_map.get(kid);
+    if (poller_instance != undefined) {
+        return poller_instance;
+    }
+    var instance= new poller_listener(kid);
+    poller_map.set(kid,instance);
+    return instance;
+};
 
-        if (message.channel === 'new_child_location') {
-            this.latitude = message.data.latitude;
-            this.longitude = message.data.longitude;
-            start_polling(this);
+module.exports = {
+    start_polling: function (kid, latitude, longitude) {
+        var poller_listener = get_instance(kid);
+        poller_listener.newLocation(latitude, longitude);
+    },
+    stop_polling: function (kid) {
+        var poller_instance = poller_map.get(kid);
+        if (poller_instance != undefined) {
+            poller_instance.offline();
         }
-        if (message.channel === 'offline_child') {
-            stop_polling(poller_listener);
-        }
-};
 
-module.exports = function (channel_to_subscribe, kid) {
-    if (poller_map.get(kid) != undefined) {
-        var poller = poller_map.get(kid);
-        set_handler(poller, channel_to_subscribe, kid);
-        return poller;
     }
-    poller = new poller_listener(channel_to_subscribe, kid);
-    return poller
 };
 
 

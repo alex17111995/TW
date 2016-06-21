@@ -2,17 +2,17 @@
  * Created by Ciubi on 18/06/16.
  */
 var validate_id = function (id) {
-    return typeof  id == "number";
+    return typeof  id == "number" ;//&& !isNaN(id);
 };
 
 var validate_latitude = function (id) {
-    return typeof  id == "number";
+    return typeof  id == "number";//&& !isNaN(id);
 };
 var validate_longitude = function (id) {
-    return typeof  id == "number";
+    return typeof  id == "number";//&& !isNaN(id);
 };
 var validate_radius = function (radius) {
-    return typeof  radius == "number";
+    return typeof  radius == "number";//&& !isNaN(id);
 };
 var validate_email = function (email) {
     if (typeof email != 'string')

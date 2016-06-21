@@ -31,7 +31,7 @@ var kidModel = function () {
 };
 
 
-var timeoutVALUE = 1000 * 60 * 1 *10;
+var timeoutVALUE = 1000 * 60      *3;
 var update_location = function (kid, latitude, longitude) {
     return new promise(function (resolve, reject) {
         oracleconnect.executeSQL('BEGIN update_location_child(:kid,:latitude,:longitude,:timestamp_out); END;', {
@@ -53,7 +53,6 @@ var update_location = function (kid, latitude, longitude) {
                     }
                 });
                 resolve(true);
-                geoFancing(kid);
 
             })
             .catch(function (error) {
@@ -67,19 +66,22 @@ var update_location = function (kid, latitude, longitude) {
 kidModel.prototype.updateLocation = function (kid, information) {
 
     return new promise(function (resolve, reject) {
-        if (!validations.validate_update_location(kid, information)) {
+        if (!validations.validate_update_location(kid,information)) {
             reject(new Error('invalid parameters'));
             return;
         }
-
+        var poller=require('../controller/poller_listener');
+        poller.start_polling(kid,information.latitude,information.longitude);
         update_location(kid, information['latitude'], information['longitude'], 1)
             .then(function () {
                 clearTimeoutId(kid);
                 var timeoutID = setTimeout(function () {
                     onOffline(kid, information['latitude'], information['longitude'])
                 }, timeoutVALUE);
+
                 resolve(true);
                 setTimeoutId(kid, timeoutID);
+                geoFancing(kid);
             })
             .catch(function (error) {
                 reject(error);
@@ -146,6 +148,8 @@ var onOffline = function (kid) {
                 'kid': kid
             }
         });
+    var poller=require('../controller/poller_listener');
+   poller.stop_polling(kid);
 };
 
 kidModel.prototype.static_targets_of_child = function (connection, kid) {

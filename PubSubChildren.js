@@ -2,14 +2,13 @@
  * Created by Ciubi on 04/06/16.
  */
 
-var poller = require('./controller/poller_listener');
 var promise = require('promise');
 
 var PubSubChildren = function (type,kid) {
     this.type = type;
     this.kid = kid;
     this.handlers = [];
-    this.poller = poller(this, kid);
+   // this.poller = poller(this, kid);
 };
 
 PubSubChildren.prototype.subs = function (handler) {
@@ -21,7 +20,7 @@ PubSubChildren.prototype.publish = function (message) {
     for (var i = 0; i < this.handlers.length; i++) {
         this.handlers[i].call(this, message);
     }
-    this.poller.event_handle(message);
+
 };
 PubSubChildren.prototype.unsubscribe = function (handler) {
     for (var i = 0; i < this.handlers.length; i++) {
@@ -35,9 +34,9 @@ PubSubChildren.prototype.unsubscribe = function (handler) {
 };
 
 PubSubChildren.prototype.close = function () {
-    this.poller.stop();
+//    this.poller.stop();
    console.log('sunt copil si ma inchid');
-    this.poller = undefined;
+  //  this.poller = undefined;
     this.handlers = [];
 };
 

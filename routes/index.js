@@ -42,7 +42,10 @@ router.get('/', verifySession, function (req, res, next) {
         res.send(error.message);
     });
     */
+    if(req.session.type=='parent')
     res.sendFile(path.join(__dirname,'../public', 'index-1-19.html'));
+   else
+    res.render('index');
    // res.render('index');
 
 });

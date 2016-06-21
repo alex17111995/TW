@@ -1,6 +1,7 @@
 /**
  * Created by Ciubi on 16/06/16.
  */
+
 var express = require('express');
 var router = express.Router();
 var passport = require('passport');
@@ -23,8 +24,9 @@ passport.serializeUser(function (user, cb) {
 passport.deserializeUser(function (obj, cb) {
     cb(null, obj);
 });
-router.get('/login',
-    passport.authenticate('facebook', {scope: ['email']}));
+router.get('/',function(req,res) {
+    passport.authenticate('facebook', {scope: ['email']});
+});
 router.get('/return',
     passport.authenticate('facebook', {session: false, failureRedirect: '/login'}),
     function (req, res) {

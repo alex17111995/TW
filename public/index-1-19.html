@@ -622,7 +622,7 @@
 
             var code = "";
             code += "<div id=\"staticTarget" + staticTargetInformation.static_target_id + "\">";
-            code += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect mdl-color--teal\" onclick = \"centerOnStaticTarget('" + staticTargetInformation.static_target_id + "')\">Area " + ((staticTargetCount[staticTargetKidID]++) + 1) + "</button>";
+            code += "<button class=\"st-button mdl-button mdl-js-button mdl-button mdl-js-ripple-effect mdl-color--teal\" onclick = \"centerOnStaticTarget('" + staticTargetInformation.static_target_id + "')\">Area " + ((staticTargetCount[staticTargetInformation.kid]++) + 1) + "</button>";
             code += "<span style=\"position: relative;left: 5px;\">";
             code += "<label class=\"mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect\" for=\"editToggle" + staticTargetInformation.static_target_id + "\">";
             code += "<input type=\"checkbox\" id=\"editToggle" + staticTargetInformation.static_target_id + "\" class=\"mdl-icon-toggle__input\" onclick = \"toggleEdit('" + staticTargetInformation.static_target_id + "')\">";
@@ -630,7 +630,7 @@
             code += "</label>&#160; &#160;";
             code += "<button class=\"mdl-button mdl-js-button mdl-button--icon\" onclick = \"sendStaticTargetDeleteRequest('" + staticTargetInformation.static_target_id + "')\"><i class=\"material-icons\">delete</i></button></span></div>";
 
-            document.getElementById("staticTargets" + staticTargetKidID).appendChild(newTarget).innerHTML = code;
+            document.getElementById("staticTargets" + staticTargetInformation.kid).appendChild(newTarget).innerHTML = code;
             componentHandler.upgradeDom();
         }
 
@@ -1243,6 +1243,8 @@
 </head>
 
 <body id="plsWork" onload="renderPage()">
+    <form action="logout" method="post" id="form1">
+    </form>
 
     <div class="interface-area mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
         <div class="mdl-layout__drawer  mdl-color--blue">
@@ -1253,7 +1255,7 @@
                     <button id="addKidButton" class="userMenu-button mdl-button mdl-js-button mdl-js-ripple-effect" onclick="showTextField()">Add child <i class="material-icons" style="position:absolute;right:10px;top:10px;">add_box</i></button>
                 </div>
                 <button class="userMenu-halfButton mdl-button mdl-js-button mdl-js-ripple-effect" style="margin-left:5px;">Help<i class="material-icons" style="position:absolute;right:10px;top:10px;">help</i></button>
-                <button class="userMenu-halfButton mdl-button mdl-js-button mdl-button--accent" style="position:relative;left:15px;" onclick="window.location='/logout';"> Logout <i class="material-icons" style="position:absolute;right:10px;top:10px;">exit_to_app</i></button>
+                <button class="userMenu-halfButton mdl-button mdl-js-button mdl-button--accent" style="position:relative;left:15px;" type="submit" form="form1"> Logout <i class="material-icons" style="position:absolute;right:10px;top:10px;">exit_to_app</i></button>
 
                 <br/>
             </div>

@@ -32,7 +32,7 @@ router.post('/', verifyAlreadyLogged, function (req, res, next) {
     object.updateLocation(req.session.id_user, {
         'latitude': latitude,
         'longitude': longitude
-    }, req.session.timeoutID).then(function (resp) {
+    }).then(function (resp) {
             res.send(resp);
         })
         .catch(function (err) {

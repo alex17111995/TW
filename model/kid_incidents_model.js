@@ -8,6 +8,7 @@ module.exports = {
     update_incidents(kid, incidentsList){
         return new promise(function (resolve) {
             incidentsMap.set(kid, incidentsList);
+
             resolve(true);
         });
     },

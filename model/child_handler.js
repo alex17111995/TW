@@ -52,6 +52,10 @@ var children_of_dynamic_target = function (pid) {
 
 var update_location = function (pid, latitude, longitude) {
     return new promise(function (resolve, reject) {
+        if(!validations.validate_update_location(pid,{latitude:latitude,longitude:longitude})){
+            reject(new Error('invalid coodonates'));
+            return;
+        }
         oracleConn.executeSQL('BEGIN update_location_parent(:pid,:latitude,' +
             ':longitude,:timestamp_out,:array_children); END;', {
             pid: pid,
@@ -347,7 +351,7 @@ child_handler.prototype.updateLocation = function (pid, information) {
                 clearTimeoutId(pid);
                 var timeoutID = setTimeout(function () {
                     onOffline(pid)
-                }, 1000 * 60 * 1 / 4);
+                }, 1000 * 60 * 3);
                 setTimeoutId(pid, timeoutID);
                 resolve(true);
             })
